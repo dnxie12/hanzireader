@@ -8,7 +8,7 @@ const Storage = (() => {
     streak: { current: 0, longest: 0, lastDate: null },
     daily: {},
     settings: {
-      newPerDay: 10,
+      newPerDay: 25,
       theme: 'system',
       placementDone: false,
       currentIndex: 0

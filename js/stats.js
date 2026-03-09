@@ -68,7 +68,7 @@ const Stats = (() => {
           <div class="settings-row">
             <label>New cards per day</label>
             <div style="display:flex; align-items:center; gap:8px;">
-              <input type="range" id="setting-new-per-day" min="5" max="20" step="1" value="${settings.newPerDay}">
+              <input type="range" id="setting-new-per-day" min="5" max="50" step="1" value="${settings.newPerDay}">
               <span id="new-per-day-val" style="font-size:14px; font-weight:600; min-width:24px;">${settings.newPerDay}</span>
             </div>
           </div>

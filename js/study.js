@@ -15,15 +15,25 @@ const Study = (() => {
     const el = document.getElementById('screen-study');
     buildSession();
 
+    const hasMoreNew = Data.getNextNewChars(1).length > 0;
     if (queue.length === 0 && newQueue.length === 0) {
       el.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <h3>All caught up!</h3>
-          <p>No cards due right now. Come back later or adjust your daily new card limit.</p>
-          <button class="btn-secondary" onclick="App.navigate('home')">Back Home</button>
+          <p>No cards due right now.${hasMoreNew ? '' : ' You\'ve seen all available characters!'}</p>
+          ${hasMoreNew ? '<button class="btn-primary" id="btn-learn-more" style="max-width:280px;">Keep Learning (+10 cards)</button>' : ''}
+          <button class="btn-secondary" onclick="App.navigate('home')" style="margin-top:8px;">Back Home</button>
         </div>
       `;
+      if (hasMoreNew) {
+        document.getElementById('btn-learn-more').addEventListener('click', () => {
+          newQueue = Data.getNextNewChars(10);
+          currentIndex = 0;
+          sessionStats = { reviews: 0, correct: 0, newLearned: 0, startTime: Date.now() };
+          showCard();
+        });
+      }
       return;
     }
 
