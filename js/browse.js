@@ -3,14 +3,18 @@
 const Browse = (() => {
   let currentFilter = 'all';
   let searchQuery = '';
+  let searchMode = 'all'; // 'all', 'pinyin', 'meaning'
 
   function render() {
     const el = document.getElementById('screen-browse');
     el.innerHTML = `
       <div class="browse-search">
-        <input type="text" class="search-input" id="browse-search-input"
-               placeholder="Search character, pinyin, or meaning..."
-               autocomplete="off" autocapitalize="none" spellcheck="false">
+        <div class="search-row">
+          <input type="text" class="search-input" id="browse-search-input"
+                 placeholder="${searchPlaceholder()}"
+                 autocomplete="off" autocapitalize="none" spellcheck="false">
+          <button class="search-mode-btn" id="search-mode-btn">${searchModeLabel()}</button>
+        </div>
         <div class="browse-filters" id="browse-filters"></div>
       </div>
       <div class="char-grid" id="char-grid"></div>
@@ -23,6 +27,26 @@ const Browse = (() => {
       searchQuery = e.target.value;
       renderGrid();
     });
+
+    document.getElementById('search-mode-btn').addEventListener('click', () => {
+      const modes = ['all', 'pinyin', 'meaning'];
+      searchMode = modes[(modes.indexOf(searchMode) + 1) % modes.length];
+      document.getElementById('search-mode-btn').textContent = searchModeLabel();
+      document.getElementById('browse-search-input').placeholder = searchPlaceholder();
+      if (searchQuery) renderGrid();
+    });
+  }
+
+  function searchModeLabel() {
+    return { all: 'All', pinyin: 'Pinyin', meaning: 'Meaning' }[searchMode];
+  }
+
+  function searchPlaceholder() {
+    return {
+      all: 'Search character, pinyin, or meaning...',
+      pinyin: 'Search by pinyin (e.g. ma, shi)...',
+      meaning: 'Search by meaning (e.g. water, big)...'
+    }[searchMode];
   }
 
   function renderFilters() {
@@ -67,7 +91,7 @@ const Browse = (() => {
     let chars;
 
     if (searchQuery) {
-      chars = Data.search(searchQuery);
+      chars = Data.search(searchQuery, searchMode);
     } else if (currentFilter === 'all') {
       chars = Data.getLearnOrder();
     } else if (currentFilter.startsWith('r:')) {

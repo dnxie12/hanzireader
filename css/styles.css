@@ -460,6 +460,30 @@ body {
   background: var(--bg-primary);
 }
 
+.search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-mode-btn {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.search-mode-btn:active {
+  opacity: 0.7;
+}
+
 .search-input {
   width: 100%;
   padding: 10px 14px;

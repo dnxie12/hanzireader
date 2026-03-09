@@ -28,16 +28,24 @@ const Data = (() => {
   }
 
   // Search by character, pinyin (with or without accents), or definition
-  function search(query) {
+  // mode: 'all' (default), 'pinyin', 'meaning'
+  function search(query, mode) {
     if (!query) return getLearnOrder();
     const q = query.toLowerCase().trim();
     const qPlain = stripTones(q);
+    const m = mode || 'all';
     const results = [];
     for (const [char, info] of Object.entries(window.CHAR_DATA || {})) {
-      if (char === q ||
-          info.p.toLowerCase().includes(q) ||
-          stripTones(info.p.toLowerCase()).includes(qPlain) ||
-          info.d.toLowerCase().includes(q)) {
+      const matchChar = char === q;
+      const matchPinyin = info.p.toLowerCase().includes(q) ||
+                          stripTones(info.p.toLowerCase()).includes(qPlain);
+      const matchDef = info.d.toLowerCase().includes(q);
+
+      if (m === 'pinyin' && (matchChar || matchPinyin)) {
+        results.push(char);
+      } else if (m === 'meaning' && (matchChar || matchDef)) {
+        results.push(char);
+      } else if (m === 'all' && (matchChar || matchPinyin || matchDef)) {
         results.push(char);
       }
     }
