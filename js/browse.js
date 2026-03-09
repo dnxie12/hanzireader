@@ -99,7 +99,7 @@ const Browse = (() => {
     const chars = getFilteredChars();
 
     grid.innerHTML = chars.map(char =>
-      `<div class="char-grid-item ${getCharStateClass(char)}" data-char="${char}">${char}</div>`
+      `<div class="char-grid-item ${getCharStateClass(char)}" data-char="${char}">${UI.esc(char)}</div>`
     ).join('');
 
     grid.addEventListener('click', (e) => {

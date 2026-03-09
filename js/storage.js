@@ -4,6 +4,10 @@ const Storage = (() => {
   const SRS_KEY = 'hanzi_srs';
   const PROGRESS_KEY = 'hanzi_progress';
 
+  // In-memory caches to avoid repeated localStorage reads
+  let srsCache = null;
+  let progressCache = null;
+
   const DEFAULT_PROGRESS = {
     streak: { current: 0, longest: 0, lastDate: null },
     daily: {},
@@ -32,18 +36,21 @@ const Storage = (() => {
     }
   }
 
-  // --- SRS State ---
+  // --- SRS State (with in-memory cache) ---
   function getSRS() {
-    return load(SRS_KEY, {});
+    if (!srsCache) {
+      srsCache = load(SRS_KEY, {});
+    }
+    return srsCache;
   }
 
   function saveSRS(srs) {
+    srsCache = srs;
     save(SRS_KEY, srs);
   }
 
   function getCardState(char) {
-    const srs = getSRS();
-    return srs[char] || null;
+    return getSRS()[char] || null;
   }
 
   function saveCardState(char, state) {
@@ -52,12 +59,16 @@ const Storage = (() => {
     saveSRS(srs);
   }
 
-  // --- Progress ---
+  // --- Progress (with in-memory cache) ---
   function getProgress() {
-    return load(PROGRESS_KEY, { ...DEFAULT_PROGRESS });
+    if (!progressCache) {
+      progressCache = load(PROGRESS_KEY, { ...DEFAULT_PROGRESS });
+    }
+    return progressCache;
   }
 
   function saveProgress(progress) {
+    progressCache = progress;
     save(PROGRESS_KEY, progress);
   }
 
@@ -73,9 +84,16 @@ const Storage = (() => {
     return p.settings;
   }
 
-  // --- Streak ---
+  // --- Streak (with validation) ---
   function updateStreak() {
     const p = getProgress();
+    if (!p.streak || typeof p.streak !== 'object') {
+      p.streak = { current: 0, longest: 0, lastDate: null };
+    }
+    // Validate numeric fields
+    if (!Number.isInteger(p.streak.current)) p.streak.current = 0;
+    if (!Number.isInteger(p.streak.longest)) p.streak.longest = 0;
+
     const today = new Date().toISOString().slice(0, 10);
 
     if (p.streak.lastDate === today) return p.streak;
@@ -95,12 +113,21 @@ const Storage = (() => {
   }
 
   // --- Daily Stats ---
+  function ensureDailyEntry(p, date) {
+    if (!p.daily[date] || typeof p.daily[date] !== 'object') {
+      p.daily[date] = { reviews: 0, newCards: 0, correct: 0, timeMs: 0 };
+    }
+    const d = p.daily[date];
+    if (!Number.isFinite(d.reviews)) d.reviews = 0;
+    if (!Number.isFinite(d.newCards)) d.newCards = 0;
+    if (!Number.isFinite(d.correct)) d.correct = 0;
+    if (!Number.isFinite(d.timeMs)) d.timeMs = 0;
+  }
+
   function recordDailyReview(correct) {
     const p = getProgress();
     const today = new Date().toISOString().slice(0, 10);
-    if (!p.daily[today]) {
-      p.daily[today] = { reviews: 0, newCards: 0, correct: 0, timeMs: 0 };
-    }
+    ensureDailyEntry(p, today);
     p.daily[today].reviews += 1;
     if (correct) p.daily[today].correct += 1;
     saveProgress(p);
@@ -109,9 +136,7 @@ const Storage = (() => {
   function recordNewCard() {
     const p = getProgress();
     const today = new Date().toISOString().slice(0, 10);
-    if (!p.daily[today]) {
-      p.daily[today] = { reviews: 0, newCards: 0, correct: 0, timeMs: 0 };
-    }
+    ensureDailyEntry(p, today);
     p.daily[today].newCards += 1;
     saveProgress(p);
   }
@@ -122,7 +147,7 @@ const Storage = (() => {
     return p.daily[key] || { reviews: 0, newCards: 0, correct: 0, timeMs: 0 };
   }
 
-  // --- Export/Import ---
+  // --- Export/Import (with validation) ---
   function exportData() {
     return JSON.stringify({
       srs: getSRS(),
@@ -131,14 +156,41 @@ const Storage = (() => {
     }, null, 2);
   }
 
+  function validateSRS(srs) {
+    if (!srs || typeof srs !== 'object' || Array.isArray(srs)) return false;
+    for (const [char, state] of Object.entries(srs)) {
+      if (typeof char !== 'string' || char.length === 0) return false;
+      if (!state || typeof state !== 'object') return false;
+      if (typeof state.state !== 'number' || state.state < 0 || state.state > 3) return false;
+      if (typeof state.reps !== 'number') return false;
+    }
+    return true;
+  }
+
+  function validateProgress(prog) {
+    if (!prog || typeof prog !== 'object' || Array.isArray(prog)) return false;
+    if (prog.streak && typeof prog.streak !== 'object') return false;
+    if (prog.daily && typeof prog.daily !== 'object') return false;
+    if (prog.settings && typeof prog.settings !== 'object') return false;
+    return true;
+  }
+
   function importData(json) {
     const data = JSON.parse(json);
-    if (data.srs) saveSRS(data.srs);
-    if (data.progress) saveProgress(data.progress);
+    if (data.srs) {
+      if (!validateSRS(data.srs)) throw new Error('Invalid SRS data');
+      saveSRS(data.srs);
+    }
+    if (data.progress) {
+      if (!validateProgress(data.progress)) throw new Error('Invalid progress data');
+      saveProgress(data.progress);
+    }
     return true;
   }
 
   function clearAll() {
+    srsCache = null;
+    progressCache = null;
     localStorage.removeItem(SRS_KEY);
     localStorage.removeItem(PROGRESS_KEY);
   }

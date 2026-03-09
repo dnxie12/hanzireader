@@ -105,16 +105,16 @@ const Study = (() => {
         <span class="meta-tag" style="font-size:11px;">NEW</span>
       </div>
       <div class="study-card" id="study-card">
-        <div class="char-large">${char}</div>
-        <div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${info.p}</div>
-        <div class="definition" style="margin-top:4px;">${info.d}</div>
+        <div class="char-large">${UI.esc(char)}</div>
+        <div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</div>
+        <div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>
         ${info.cw && info.cw.length > 0 ? `
         <div class="compound-list" style="margin-top:12px;">
           ${info.cw.slice(0, 4).map(([chars, py, def]) => `
             <div class="compound-item">
-              <span class="compound-char">${chars}</span>
-              <span class="compound-pinyin tone-${UI.getTone(py)}">${py}</span>
-              <span class="compound-def">${def}</span>
+              <span class="compound-char">${UI.esc(chars)}</span>
+              <span class="compound-pinyin tone-${UI.getTone(py)}">${UI.esc(py)}</span>
+              <span class="compound-def">${UI.esc(def)}</span>
             </div>
           `).join('')}
         </div>
@@ -150,8 +150,8 @@ const Study = (() => {
       </div>
       <div class="study-card" style="cursor:default;">
         <p style="font-size:14px; color:var(--text-muted);">Which character is</p>
-        <div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:32px; font-weight:700;">${info.p}</div>
-        <div class="definition">${info.d}</div>
+        <div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:32px; font-weight:700;">${UI.esc(info.p)}</div>
+        <div class="definition">${UI.esc(info.d)}</div>
       </div>
       <div class="rating-buttons" style="margin-top:12px;">
         ${options.map(opt => `
@@ -213,7 +213,7 @@ const Study = (() => {
         ${isMiniReview ? '<span class="meta-tag" style="font-size:11px;">REVIEW</span>' : ''}
       </div>
       <div class="study-card" id="study-card">
-        <div class="char-large">${char}</div>
+        <div class="char-large">${UI.esc(char)}</div>
         <div id="reveal-content"></div>
         <p class="hint" id="reveal-hint">Tap to reveal</p>
       </div>
@@ -238,18 +238,18 @@ const Study = (() => {
     let html = '';
 
     if (revealStage >= 1) {
-      html += `<div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${info.p}</div>`;
+      html += `<div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</div>`;
     }
     if (revealStage >= 2) {
-      html += `<div class="definition" style="margin-top:4px;">${info.d}</div>`;
+      html += `<div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>`;
     }
     if (revealStage >= 3 && info.cw && info.cw.length > 0) {
       html += `<div class="compound-list" style="margin-top:12px;">
         ${info.cw.slice(0, 4).map(([chars, py, def]) => `
           <div class="compound-item">
-            <span class="compound-char">${chars}</span>
-            <span class="compound-pinyin tone-${UI.getTone(py)}">${py}</span>
-            <span class="compound-def">${def}</span>
+            <span class="compound-char">${UI.esc(chars)}</span>
+            <span class="compound-pinyin tone-${UI.getTone(py)}">${UI.esc(py)}</span>
+            <span class="compound-def">${UI.esc(def)}</span>
           </div>
         `).join('')}
       </div>`;
