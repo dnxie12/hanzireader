@@ -22,14 +22,21 @@ const Data = (() => {
     return getAllChars().length;
   }
 
-  // Search by character, pinyin, or definition
+  // Strip tone marks from pinyin for accent-free matching
+  function stripTones(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+  }
+
+  // Search by character, pinyin (with or without accents), or definition
   function search(query) {
-    if (!query) return getAllChars();
+    if (!query) return getLearnOrder();
     const q = query.toLowerCase().trim();
+    const qPlain = stripTones(q);
     const results = [];
     for (const [char, info] of Object.entries(window.CHAR_DATA || {})) {
       if (char === q ||
           info.p.toLowerCase().includes(q) ||
+          stripTones(info.p.toLowerCase()).includes(qPlain) ||
           info.d.toLowerCase().includes(q)) {
         results.push(char);
       }
