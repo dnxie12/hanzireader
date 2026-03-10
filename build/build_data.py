@@ -11,6 +11,8 @@ Sources (all in build/sources/):
   - hanziDB.csv: frequency rank, pinyin, definition, radical, strokes
   - dictionary.txt: Make Me a Hanzi (NDJSON) — decomposition, etymology
   - cedict.txt: CC-CEDICT — compound words
+  - word_freq.txt: jieba dict.txt.big — word frequency data (MIT licensed)
+    Download: https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.big
 
 Usage:
   python3 build/build_data.py
@@ -32,9 +34,20 @@ OUTPUT = BASE.parent / "data" / "char_data.js"
 HANZIDB_PATH = SOURCES / "hanziDB.csv"
 MMAH_PATH = SOURCES / "dictionary.txt"      # Make Me a Hanzi
 CEDICT_PATH = SOURCES / "cedict.txt"
+WORD_FREQ_PATH = SOURCES / "word_freq.txt"
 
 TOP_N = 2400
 MAX_COMPOUNDS_PER_CHAR = 8
+
+# Patterns in CC-CEDICT definitions that indicate proper nouns / low-value entries
+PROPER_NOUN_RE = re.compile(
+    r'\(Japanese |Japanese surname|Japanese company'
+    r'|Korean surname'
+    r'|county in |township in |district in |prefecture'
+    r'|province in | city in '
+    r'|stage name of ',
+    re.IGNORECASE
+)
 
 # --- Tone number to tone mark conversion ---
 TONE_MARKS = {
@@ -184,10 +197,27 @@ def parse_makemeahanzi():
     return data
 
 
-# --- Step 3: Parse CC-CEDICT ---
-def parse_cedict(char_set):
+# --- Step 3: Load word frequencies ---
+def load_word_frequencies():
+    """Parse jieba dict.txt.big: 'word freq pos' per line, space-separated."""
+    freq = {}
+    with open(WORD_FREQ_PATH, 'r', encoding='utf-8') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                try:
+                    freq[parts[0]] = int(parts[1])
+                except ValueError:
+                    continue
+    print(f"  Word frequencies: {len(freq)} entries")
+    return freq
+
+
+# --- Step 4: Parse CC-CEDICT (ranked by word frequency) ---
+def parse_cedict(char_set, word_freq):
     """
     Parse CC-CEDICT, find compound words where ALL constituent chars are in char_set.
+    Rank by actual word frequency (from jieba), penalizing proper nouns.
     Return dict: char -> list of [compound, pinyin, definition].
     """
     compounds = defaultdict(list)  # char -> [(compound, pinyin, def, freq_score)]
@@ -228,10 +258,19 @@ def parse_cedict(char_set):
             if len(definition) > 40:
                 definition = definition[:37] + '...'
 
-            # Frequency score: strongly prefer 2-char words, penalize longer/rarer ones
-            avg_rank = sum(char_set.get(c, {}).get('f', 9999) for c in word) / len(word)
-            length_penalty = {2: 0, 3: 500, 4: 1000}.get(len(word), 1500)
-            freq_score = avg_rank + length_penalty
+            # Score by actual word frequency (higher freq = lower score = ranked first)
+            wf = word_freq.get(word, 0)
+            is_proper = bool(PROPER_NOUN_RE.search(defs))
+
+            if wf > 0:
+                effective_freq = wf // 100 if is_proper else wf
+                freq_score = -effective_freq
+            else:
+                # Fallback for words not in frequency dict
+                avg_rank = sum(char_set.get(c, {}).get('f', 9999) for c in word) / len(word)
+                length_penalty = {2: 0, 3: 500, 4: 1000}.get(len(word), 1500)
+                proper_penalty = 5000 if is_proper else 0
+                freq_score = avg_rank + length_penalty + proper_penalty + 10000
 
             # Add to each constituent character's compound list
             for c in word:
@@ -241,13 +280,13 @@ def parse_cedict(char_set):
     # Sort by frequency score (lower = more common) and take top N per character
     result = {}
     for char, cw_list in compounds.items():
-        # Deduplicate by word
-        seen = set()
-        unique = []
+        # Deduplicate by word, keeping best (lowest) score
+        best = {}
         for item in cw_list:
-            if item[0] not in seen:
-                seen.add(item[0])
-                unique.append(item)
+            w = item[0]
+            if w not in best or item[3] < best[w][3]:
+                best[w] = item
+        unique = list(best.values())
 
         unique.sort(key=lambda x: x[3])
         result[char] = [[w, p, d] for w, p, d, _ in unique[:MAX_COMPOUNDS_PER_CHAR]]
@@ -256,7 +295,7 @@ def parse_cedict(char_set):
     return result
 
 
-# --- Step 4: Generate learning order ---
+# --- Step 5: Generate learning order ---
 def generate_learn_order(chars):
     """
     Frequency-based with radical-family batching within tiers.
@@ -299,7 +338,7 @@ def generate_learn_order(chars):
     return order
 
 
-# --- Step 5: Build radical reference data ---
+# --- Step 6: Build radical reference data ---
 def build_radical_data(chars):
     """Build radical reference with examples."""
     radical_chars = defaultdict(list)
@@ -332,7 +371,7 @@ def build_radical_data(chars):
     return radicals
 
 
-# --- Step 6: Merge and output ---
+# --- Step 7: Merge and output ---
 def main():
     print("Building char_data.js...\n")
 
@@ -342,11 +381,14 @@ def main():
     print("Step 2: Parsing Make Me a Hanzi...")
     mmah = parse_makemeahanzi()
 
-    print("Step 3: Parsing CC-CEDICT...")
-    compounds = parse_cedict(chars)
+    print("Step 3: Loading word frequencies...")
+    word_freq = load_word_frequencies()
+
+    print("Step 4: Parsing CC-CEDICT...")
+    compounds = parse_cedict(chars, word_freq)
 
     # Merge Make Me a Hanzi data
-    print("Step 4: Merging data...")
+    print("Step 5: Merging data...")
     for char in chars:
         if char in mmah:
             chars[char]['dc'] = mmah[char]['dc']
@@ -365,14 +407,14 @@ def main():
     chars_with_compounds = sum(1 for c in chars if chars[c]['cw'])
     print(f"  Merged: {len(chars)} chars, {chars_with_compounds} with compound words")
 
-    print("Step 5: Generating learn order...")
+    print("Step 6: Generating learn order...")
     learn_order = generate_learn_order(chars)
 
-    print("Step 6: Building radical data...")
+    print("Step 7: Building radical data...")
     radical_data = build_radical_data(chars)
 
     # Output
-    print("Step 7: Writing char_data.js...")
+    print("Step 8: Writing char_data.js...")
 
     # Build the JS output
     lines = ['// Auto-generated by build_data.py — DO NOT EDIT',
@@ -431,7 +473,7 @@ def main():
 
     # Spot check
     print("\nSpot check:")
-    for sample in ['的', '机', '河', '好', '学']:
+    for sample in ['的', '机', '河', '好', '学', '木', '水', '金', '田', '人']:
         if sample in chars:
             info = chars[sample]
             cw = info.get('cw', [])
