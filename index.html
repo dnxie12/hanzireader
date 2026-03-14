@@ -15,6 +15,7 @@
   <div id="app">
     <!-- Screens -->
     <div id="screen-home" class="screen"></div>
+    <div id="screen-read" class="screen"></div>
     <div id="screen-study" class="screen"></div>
     <div id="screen-browse" class="screen"></div>
     <div id="screen-stats" class="screen"></div>
@@ -31,6 +32,10 @@
       <button class="tab" data-screen="home" aria-label="Home">
         <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Home</span>
+      </button>
+      <button class="tab" data-screen="read" aria-label="Read">
+        <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <span>Read</span>
       </button>
       <button class="tab" data-screen="study" aria-label="Study">
         <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
@@ -49,12 +54,14 @@
 
   <!-- Scripts (order matters: data first, then modules, then screens, then app) -->
   <script src="data/char_data.js"></script>
+  <script src="data/snippets.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/data.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/srs.js"></script>
   <script src="js/home.js"></script>
   <script src="js/study.js"></script>
+  <script src="js/read.js"></script>
   <script src="js/browse.js"></script>
   <script src="js/stats.js"></script>
   <script src="js/app.js"></script>

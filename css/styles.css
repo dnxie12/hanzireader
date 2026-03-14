@@ -901,6 +901,202 @@ body {
   to { opacity: 1; }
 }
 
+/* --- Read Screen --- */
+.read-header {
+  margin-bottom: 16px;
+}
+
+.read-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.read-group {
+  margin-bottom: 20px;
+}
+
+.read-group-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.snippet-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, opacity 0.15s;
+}
+
+.snippet-card:active {
+  box-shadow: var(--shadow-lg);
+}
+
+.snippet-card.locked {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.snippet-preview {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.snippet-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.snippet-coverage-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.snippet-coverage-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+/* Reading view */
+.read-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: -20px -16px 0;
+  padding: 10px 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.read-progress-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.read-topic-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+  text-transform: capitalize;
+}
+
+.read-passage-container {
+  padding: 20px 0;
+  flex: 1;
+}
+
+.read-passage {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: clamp(22px, 5.5vw, 28px);
+  line-height: 1.9;
+  letter-spacing: 0.05em;
+  word-break: break-all;
+  color: var(--text-primary);
+}
+
+.read-char {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 1px;
+  transition: background 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.read-char:active,
+.read-char.tapped {
+  background: var(--accent-light);
+}
+
+.read-char.learning {
+  border-bottom: 2px solid var(--state-learning);
+}
+
+.read-char.unseen {
+  border-bottom: 2px dotted var(--text-muted);
+}
+
+.read-punct {
+  color: var(--text-secondary);
+  letter-spacing: 0;
+}
+
+.read-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -16px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + var(--safe-bottom));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+
+/* Read tooltip */
+#read-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 150;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+  min-width: 220px;
+  max-width: 280px;
+  animation: fadeIn 0.15s ease;
+}
+
+#read-tooltip.active {
+  display: block;
+}
+
+.tooltip-char {
+  font-size: 40px;
+  font-weight: 700;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.tooltip-pinyin {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.tooltip-def {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.tooltip-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* Desktop: wider layout */
 @media (min-width: 600px) {
   :root {

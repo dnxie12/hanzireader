@@ -188,6 +188,39 @@ const Storage = (() => {
     return true;
   }
 
+  // --- Reading Practice ---
+  function addReadingFlag(char) {
+    const p = getProgress();
+    if (!Array.isArray(p.readingFlags)) p.readingFlags = [];
+    if (!p.readingFlags.includes(char)) {
+      p.readingFlags.push(char);
+      saveProgress(p);
+    }
+  }
+
+  function consumeReadingFlags() {
+    const p = getProgress();
+    const flags = p.readingFlags || [];
+    p.readingFlags = [];
+    saveProgress(p);
+    return flags;
+  }
+
+  function recordSnippetRead(snippetId) {
+    const p = getProgress();
+    const today = new Date().toISOString().slice(0, 10);
+    ensureDailyEntry(p, today);
+    if (!Number.isFinite(p.daily[today].snippetsRead)) p.daily[today].snippetsRead = 0;
+    p.daily[today].snippetsRead += 1;
+    if (!p.readHistory) p.readHistory = {};
+    if (snippetId) p.readHistory[snippetId] = today;
+    saveProgress(p);
+  }
+
+  function getReadHistory() {
+    return getProgress().readHistory || {};
+  }
+
   function clearAll() {
     srsCache = null;
     progressCache = null;
@@ -200,6 +233,7 @@ const Storage = (() => {
     getProgress, saveProgress,
     getSettings, updateSettings,
     updateStreak, recordDailyReview, recordNewCard, getDailyStats,
+    addReadingFlag, consumeReadingFlags, recordSnippetRead, getReadHistory,
     exportData, importData, clearAll
   };
 })();

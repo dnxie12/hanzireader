@@ -117,6 +117,7 @@ const SRS = (() => {
   }
 
   // Get all due cards (due date <= now), sorted by most overdue first
+  // Also prepends any characters flagged from reading practice
   function getDueCards() {
     const srs = Storage.getSRS();
     const now = new Date();
@@ -134,7 +135,13 @@ const SRS = (() => {
 
     // Most overdue first
     due.sort((a, b) => b.overdueMs - a.overdueMs);
-    return due.map(d => d.char);
+    const dueChars = due.map(d => d.char);
+
+    // Prepend reading-flagged characters (only those already in SRS)
+    const flagged = Storage.consumeReadingFlags()
+      .filter(c => srs[c] && !dueChars.includes(c));
+
+    return [...flagged, ...dueChars];
   }
 
   // Get new cards up to limit

@@ -33,14 +33,28 @@ const Stats = (() => {
       <div class="stats-section">
         <h2>Last 7 Days</h2>
         <div style="display:flex; gap:4px; align-items:flex-end; height:100px;">
-          ${dailyData.map(d => `
+          ${dailyData.map(d => {
+            const snippets = d.snippetsRead || 0;
+            const totalActivity = d.reviews + snippets;
+            const maxTotal = Math.max(...dailyData.map(x => x.reviews + (x.snippetsRead || 0)), 1);
+            const reviewH = totalActivity > 0 ? Math.max(2, (d.reviews / maxTotal) * 80) : 2;
+            const readH = snippets > 0 ? Math.max(2, (snippets / maxTotal) * 80) : 0;
+            return `
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-              <div style="width:100%; background:var(--accent); border-radius:4px 4px 0 0;
-                          height:${Math.max(2, (d.reviews / maxReviews) * 80)}px;
-                          opacity:${d.reviews > 0 ? 1 : 0.2};"></div>
+              <div style="width:100%; display:flex; flex-direction:column-reverse;">
+                <div style="width:100%; background:var(--accent); border-radius:${readH > 0 ? '0' : '4px 4px'} 0 0;
+                            height:${reviewH}px;
+                            opacity:${d.reviews > 0 ? 1 : 0.2};"></div>
+                ${readH > 0 ? `<div style="width:100%; background:var(--state-review); border-radius:4px 4px 0 0;
+                            height:${readH}px;"></div>` : ''}
+              </div>
               <span style="font-size:10px; color:var(--text-muted);">${d.date.slice(8)}</span>
             </div>
-          `).join('')}
+          `}).join('')}
+        </div>
+        <div style="display:flex; gap:12px; margin-top:8px; font-size:11px; color:var(--text-muted);">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent);vertical-align:middle;margin-right:4px;"></span>Reviews</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--state-review);vertical-align:middle;margin-right:4px;"></span>Reading</span>
         </div>
       </div>
 
@@ -58,6 +72,20 @@ const Stats = (() => {
           <div class="stat-card">
             <div class="stat-value">${Data.getLiteracyPercent()}%</div>
             <div class="stat-label">Literacy</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h2>Reading</h2>
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-value">${dailyData.reduce((sum, d) => sum + (d.snippetsRead || 0), 0)}</div>
+            <div class="stat-label">Passages (7d)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${Object.keys(Storage.getReadHistory()).length}</div>
+            <div class="stat-label">Total Read</div>
           </div>
         </div>
       </div>

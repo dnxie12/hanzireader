@@ -40,7 +40,11 @@ const Home = (() => {
         ${dueCount > 0 ? `Study Now (${dueCount} due)` : 'Start Learning'}
       </button>
 
-      ${todayStats.reviews > 0 ? `
+      <button class="btn-secondary" id="home-read-btn" style="display:block;width:100%;text-align:center;">
+        Reading Practice
+      </button>
+
+      ${todayStats.reviews > 0 || todayStats.snippetsRead > 0 ? `
       <div class="stat-cards" style="margin-top: 8px;">
         <div class="stat-card">
           <div class="stat-value">${todayStats.reviews}</div>
@@ -54,12 +58,22 @@ const Home = (() => {
           <div class="stat-value">${todayStats.reviews > 0 ? Math.round(todayStats.correct / todayStats.reviews * 100) : 0}%</div>
           <div class="stat-label">Accuracy</div>
         </div>
+        ${todayStats.snippetsRead > 0 ? `
+        <div class="stat-card">
+          <div class="stat-value">${todayStats.snippetsRead}</div>
+          <div class="stat-label">Read Today</div>
+        </div>
+        ` : ''}
       </div>
       ` : ''}
     `;
 
     document.getElementById('home-study-btn').addEventListener('click', () => {
       App.navigate('study');
+    });
+
+    document.getElementById('home-read-btn').addEventListener('click', () => {
+      App.navigate('read');
     });
   }
 

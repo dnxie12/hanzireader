@@ -1,7 +1,7 @@
 // app.js — Router, tab switching, theme management, init
 
 const App = (() => {
-  const screens = ['home', 'study', 'browse', 'stats'];
+  const screens = ['home', 'read', 'study', 'browse', 'stats'];
   let currentScreen = 'home';
 
   function init() {
@@ -51,6 +51,7 @@ const App = (() => {
     // Render screen content
     switch (screen) {
       case 'home': Home.render(); break;
+      case 'read': Read.render(); break;
       case 'study': Study.render(); break;
       case 'browse': Browse.render(); break;
       case 'stats': Stats.render(); break;
