@@ -123,22 +123,21 @@ def generate_snippet_prompt(allowed_chars, topic, bucket_size):
     else:
         difficulty = "natural and conversational"
 
-    return f"""You are a Chinese language textbook author. Write a {difficulty} {SENTENCES_PER_SNIPPET}-sentence passage in modern simplified Chinese about: {topic}
+    return f"""Write a {difficulty} {SENTENCES_PER_SNIPPET}-sentence passage in modern simplified Chinese about: {topic}
 
-CRITICAL CONSTRAINT: You may ONLY use characters from this approved vocabulary list. Before writing each word, verify every character appears in the list below. Do not use any character not in this list.
+The passage should sound like something a native Mandarin speaker would actually say or write — natural phrasing, not a vocabulary exercise. Prioritize idiomatic, conversational Chinese over using every available character.
 
-<approved_characters>
+CHARACTER CONSTRAINT: Strongly prefer characters from the list below. An occasional common character outside the list is acceptable if it makes the sentence sound natural, but avoid it when possible.
+
+<preferred_characters>
 {allowed_chars}
-</approved_characters>
+</preferred_characters>
 
-Additional rules:
+Rules:
 - Standard punctuation (。，！？) and numbers are allowed
 - Each sentence should be 8-20 characters long
-- No pinyin, no English, no explanations
-
-After writing, double-check every character against the approved list. If any character is not in the list, replace that word with one that only uses approved characters.
-
-Output ONLY the Chinese passage, nothing else."""
+- No pinyin, no English, no explanations, no self-correction
+- Output ONLY the Chinese passage, nothing else"""
 
 
 def call_claude_api(prompt, api_key):
@@ -308,7 +307,7 @@ def main():
         char_str = bucket["char_set"]
 
         # Skip very early buckets (too few chars for natural text)
-        if len(bucket["all_chars"]) < 50:
+        if len(bucket["all_chars"]) < 75:
             print(
                 f"  Bucket {bucket_num}: skipping (only {len(bucket['all_chars'])} chars)"
             )
