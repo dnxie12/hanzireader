@@ -7,12 +7,25 @@ const App = (() => {
   function init() {
     SRS.init();
     applyTheme(Storage.getSettings().theme);
+
+    // Show placement test on first launch
+    if (Placement.shouldShow()) {
+      Placement.start();
+      return;
+    }
+
     setupRouting();
     setupTabs();
 
     // Navigate to hash or default to home
     const hash = window.location.hash.slice(1) || 'home';
     navigate(screens.includes(hash) ? hash : 'home');
+  }
+
+  function finishInit() {
+    setupRouting();
+    setupTabs();
+    navigate('home');
   }
 
   function setupRouting() {
@@ -75,7 +88,7 @@ const App = (() => {
     }
   });
 
-  return { init, navigate, applyTheme };
+  return { init, finishInit, navigate, applyTheme };
 })();
 
 // Boot

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v5';
+const CACHE_NAME = 'hanzi-reader-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   './js/study.js',
   './js/browse.js',
   './js/stats.js',
+  './js/placement.js',
   './data/char_data.js',
   './data/snippets.js',
   './manifest.json'
