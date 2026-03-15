@@ -1,13 +1,14 @@
 // srs.js — FSRS v6 wrapper via ts-fsrs
+// Vendored: ts-fsrs v5.2.3 from https://cdn.jsdelivr.net/npm/ts-fsrs@5.2.3/dist/index.umd.js
 // Handles scheduling, card state, and persistence
 
 const SRS = (() => {
   let fsrs = null;
 
   function init() {
-    if (typeof window.fsrsJs !== 'undefined') {
-      // ts-fsrs loaded via CDN
-      fsrs = new window.fsrsJs.FSRS({});
+    if (typeof window.FSRS !== 'undefined') {
+      // ts-fsrs loaded from vendored UMD bundle
+      fsrs = new window.FSRS.FSRS({});
       console.log('FSRS initialized');
     } else {
       console.warn('ts-fsrs not loaded — using fallback scheduling');
@@ -19,7 +20,7 @@ const SRS = (() => {
     if (!stored) {
       // New card
       if (fsrs) {
-        return new window.fsrsJs.Card();
+        return window.FSRS.createEmptyCard();
       }
       return {
         due: new Date(),
@@ -33,7 +34,7 @@ const SRS = (() => {
         last_review: undefined
       };
     }
-    const card = fsrs ? new window.fsrsJs.Card() : {};
+    const card = fsrs ? window.FSRS.createEmptyCard() : {};
     card.due = new Date(stored.due);
     card.stability = stored.stability;
     card.difficulty = stored.difficulty;
@@ -43,6 +44,7 @@ const SRS = (() => {
     card.lapses = stored.lapses;
     card.state = stored.state;
     card.last_review = stored.last_review ? new Date(stored.last_review) : undefined;
+    card.learning_steps = stored.learning_steps || 0;
     return card;
   }
 
@@ -57,7 +59,8 @@ const SRS = (() => {
       reps: card.reps,
       lapses: card.lapses,
       state: card.state,
-      last_review: card.last_review instanceof Date ? card.last_review.toISOString() : card.last_review
+      last_review: card.last_review instanceof Date ? card.last_review.toISOString() : card.last_review,
+      learning_steps: card.learning_steps || 0
     };
   }
 
@@ -72,8 +75,13 @@ const SRS = (() => {
 
     let updatedCard;
     if (fsrs) {
-      const result = fsrs.repeat(card, now);
-      updatedCard = result[rating].card;
+      try {
+        const result = fsrs.repeat(card, now);
+        updatedCard = result[rating].card;
+      } catch (e) {
+        console.warn('FSRS error, falling back:', e);
+        updatedCard = fallbackSchedule(card, rating, now);
+      }
     } else {
       // Fallback: simple interval scheduling
       updatedCard = fallbackSchedule(card, rating, now);

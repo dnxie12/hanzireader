@@ -7,7 +7,7 @@ Chinese character reading flashcard PWA for heritage Mandarin speakers. Teaches 
 - **Vanilla JS**, no framework, no build step, no bundler
 - Hash-based routing with 5 screens: Home (`#home`), Read (`#read`), Study (`#study`), Browse (`#browse`), Stats (`#stats`)
 - Data: 2,400 characters merged from hanziDB + Make Me a Hanzi + CC-CEDICT
-- SRS: FSRS v6 via ts-fsrs (CDN load with hardcoded fallback scheduling)
+- SRS: FSRS v6 via ts-fsrs v5.2.3 (vendored UMD bundle at `js/vendor/fsrs.umd.js`, with hardcoded fallback scheduling)
 - Storage: localStorage with in-memory cache (keys: `hanzi_srs`, `hanzi_progress`)
 - PWA: service worker (cache-first), manifest.json
 - Offline-first: all data pre-bundled, no runtime API calls
