@@ -23,9 +23,10 @@ const Study = (() => {
           <h3>All caught up!</h3>
           <p>No cards due right now.${hasMoreNew ? '' : ' You\'ve seen all available characters!'}</p>
           ${hasMoreNew ? '<button class="btn-primary" id="btn-learn-more" style="max-width:280px;">Keep Learning (+10 cards)</button>' : ''}
-          <button class="btn-secondary" onclick="App.navigate('home')" style="margin-top:8px;">Back Home</button>
+          <button class="btn-secondary" id="btn-back-home" style="margin-top:8px;">Back Home</button>
         </div>
       `;
+      document.getElementById('btn-back-home').addEventListener('click', () => App.navigate('home'));
       if (hasMoreNew) {
         document.getElementById('btn-learn-more').addEventListener('click', () => {
           newQueue = Data.getNextNewChars(10);
@@ -270,7 +271,17 @@ const Study = (() => {
     const intervals = SRS.getIntervalPreview(char);
 
     container.innerHTML = `
-      <div class="rating-buttons" style="margin-top:12px;">
+      <div class="rating-header">
+        <span class="rating-prompt">How well did you remember?</span>
+        <button class="rating-help-btn" id="rating-help-toggle" aria-label="Help" aria-expanded="false">?</button>
+        <div class="rating-help" id="rating-help" style="display:none;">
+          <p><strong>Again</strong> — Forgot completely. Card returns in minutes so you can relearn it.</p>
+          <p><strong>Hard</strong> — Recalled with difficulty. Shorter interval to reinforce.</p>
+          <p><strong>Good</strong> — Remembered correctly. Normal spacing before next review.</p>
+          <p><strong>Easy</strong> — Knew it instantly. Pushes the card further out to save you time.</p>
+        </div>
+      </div>
+      <div class="rating-buttons">
         <button class="rating-btn again" data-rating="1">
           Again<span class="rating-interval">${intervals[1]}</span>
         </button>
@@ -285,6 +296,13 @@ const Study = (() => {
         </button>
       </div>
     `;
+
+    container.querySelector('#rating-help-toggle').addEventListener('click', (e) => {
+      const help = container.querySelector('#rating-help');
+      const open = help.style.display === 'none';
+      help.style.display = open ? 'block' : 'none';
+      e.currentTarget.setAttribute('aria-expanded', open);
+    });
 
     container.querySelectorAll('.rating-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -336,9 +354,10 @@ const Study = (() => {
             <div class="label">Duration</div>
           </div>
         </div>
-        <button class="btn-primary" onclick="App.navigate('home')" style="margin-top:24px;">Done</button>
+        <button class="btn-primary" id="study-done-btn" style="margin-top:24px;">Done</button>
       </div>
     `;
+    document.getElementById('study-done-btn').addEventListener('click', () => App.navigate('home'));
   }
 
   return { render };

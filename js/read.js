@@ -184,9 +184,10 @@ const Read = (() => {
           <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           <h3>Keep studying to unlock reading practice</h3>
           <p>You need to learn at least 20 characters. Currently known: ${knownCount} characters.</p>
-          <button class="btn-primary" onclick="App.navigate('study')" style="max-width:280px;">Go Study</button>
+          <button class="btn-primary" id="go-study-btn" style="max-width:280px;">Go Study</button>
         </div>
       `;
+      document.getElementById('go-study-btn').addEventListener('click', () => App.navigate('study'));
       return;
     }
 

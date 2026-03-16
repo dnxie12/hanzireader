@@ -178,19 +178,21 @@ const SRS = (() => {
     }
 
     // Fallback preview
-    return { 1: '1m', 2: '10m', 3: '1d', 4: '4d' };
+    return { 1: '1 min', 2: '10 mins', 3: '1 day', 4: '4 days' };
   }
 
   function formatInterval(due, now) {
     const ms = due - now;
+    if (ms <= 0) return '< 1 min';
     const min = ms / 60000;
-    if (min < 60) return Math.round(min) + 'm';
+    if (min < 60) { const v = Math.round(min); return v + (v === 1 ? ' min' : ' mins'); }
     const hrs = min / 60;
-    if (hrs < 24) return Math.round(hrs) + 'h';
+    if (hrs < 24) { const v = Math.round(hrs); return v + (v === 1 ? ' hr' : ' hrs'); }
     const days = hrs / 24;
-    if (days < 30) return Math.round(days) + 'd';
+    if (days < 30) { const v = Math.round(days); return v + (v === 1 ? ' day' : ' days'); }
     const months = days / 30;
-    return Math.round(months) + 'mo';
+    const v = Math.round(months);
+    return v + (v === 1 ? ' mo' : ' mos');
   }
 
   return {
