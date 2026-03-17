@@ -142,7 +142,7 @@ const UI = (() => {
       el = document.createElement('div');
       el.id = 'toast';
       el.style.cssText = `
-        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        position: fixed; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
         background: var(--text-primary); color: var(--bg-primary);
         padding: 10px 20px; border-radius: 8px; font-size: 14px;
         z-index: 300; opacity: 0; transition: opacity 0.2s;

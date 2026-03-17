@@ -46,6 +46,7 @@
   --tab-height: 56px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 [data-theme="dark"] {
@@ -107,6 +108,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 20px 16px;
+  padding-top: calc(var(--safe-top) + 20px);
   padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 20px);
   -webkit-overflow-scrolling: touch;
 }
@@ -502,10 +504,10 @@ body {
 /* --- Browse Screen --- */
 .browse-search {
   position: sticky;
-  top: 0;
+  top: calc(-1 * (var(--safe-top) + 20px));
   z-index: 10;
   margin: 0 -16px;
-  padding: 0 16px 4px;
+  padding: calc(var(--safe-top) + 20px) 16px 4px;
   background: var(--bg-primary);
 }
 
@@ -648,7 +650,7 @@ body {
 .modal-content {
   width: 100%;
   max-width: var(--max-width);
-  max-height: 85dvh;
+  max-height: calc(85dvh - var(--safe-top));
   background: var(--bg-modal);
   border-radius: var(--radius) var(--radius) 0 0;
   padding: 24px 20px;
@@ -1028,10 +1030,10 @@ body {
 /* Reading view */
 .read-nav {
   position: sticky;
-  top: 0;
+  top: calc(-1 * (var(--safe-top) + 20px));
   z-index: 10;
-  margin: -20px -16px 0;
-  padding: 10px 16px;
+  margin: calc(-1 * (var(--safe-top) + 20px)) -16px 0;
+  padding: calc(var(--safe-top) + 10px) 16px 10px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -1153,6 +1155,7 @@ body {
   align-items: center;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-top: var(--safe-top);
 }
 
 .placement-overlay > * {
