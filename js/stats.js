@@ -243,5 +243,13 @@ const Stats = (() => {
     `;
   }
 
+  // Re-render stats when Firebase auth state is restored after page load
+  Sync.onAuthChange(() => {
+    const statsScreen = document.getElementById('screen-stats');
+    if (statsScreen && statsScreen.offsetParent !== null) {
+      render();
+    }
+  });
+
   return { render };
 })();
