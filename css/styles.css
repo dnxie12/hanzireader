@@ -387,14 +387,14 @@ body {
 .compound-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   width: 100%;
 }
 
 .compound-item {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 12px;
   font-size: 16px;
   white-space: nowrap;
 }
@@ -741,14 +741,14 @@ body {
 .modal-compounds {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .modal-compound {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: 8px 0;
+  gap: 12px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border-light);
 }
 
