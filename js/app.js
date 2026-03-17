@@ -7,6 +7,7 @@ const App = (() => {
   function init() {
     SRS.init();
     applyTheme(Storage.getSettings().theme);
+    Sync.init();
 
     // Show placement test on first launch
     if (Placement.shouldShow()) {

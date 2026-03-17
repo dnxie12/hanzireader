@@ -112,6 +112,29 @@ const Stats = (() => {
       </div>
 
       <div class="stats-section">
+        <h2>Cloud Sync</h2>
+        ${Sync.getUser() ? `
+          <div class="settings-group">
+            <div class="settings-row">
+              <label>Signed in as</label>
+              <span style="font-size:14px;">${UI.esc(Sync.getUser().displayName || Sync.getUser().email || 'Google User')}</span>
+            </div>
+            <div class="settings-row">
+              <label>Last synced</label>
+              <span style="font-size:14px;">${settings.lastSyncTime ? new Date(settings.lastSyncTime).toLocaleString() : 'Never'}</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-secondary" id="btn-sync-now">Sync Now</button>
+            <button class="btn-secondary" id="btn-sync-signout">Sign Out</button>
+          </div>
+        ` : `
+          <p style="font-size:14px; color:var(--text-secondary); margin-bottom:8px;">Sync your progress across devices with Google sign-in.</p>
+          <button class="btn-secondary" id="btn-sync-signin">Sign In with Google</button>
+        `}
+      </div>
+
+      <div class="stats-section">
         <h2>Data</h2>
         <div style="display:flex; gap:8px;">
           <button class="btn-secondary" id="btn-export">Export Progress</button>
@@ -132,6 +155,47 @@ const Stats = (() => {
       Storage.updateSettings({ theme: e.target.value });
       App.applyTheme(e.target.value);
     });
+
+    // Sync event listeners
+    const signInBtn = document.getElementById('btn-sync-signin');
+    if (signInBtn) {
+      signInBtn.addEventListener('click', async () => {
+        try {
+          await Sync.signIn();
+          UI.toast('Signed in and synced');
+          Stats.render();
+        } catch (e) {
+          console.warn('Sign-in failed:', e);
+          UI.toast('Sign-in failed');
+        }
+      });
+    }
+    const syncNowBtn = document.getElementById('btn-sync-now');
+    if (syncNowBtn) {
+      syncNowBtn.addEventListener('click', async () => {
+        try {
+          await Sync.syncNow();
+          UI.toast('Synced');
+          Stats.render();
+        } catch (e) {
+          console.warn('Sync failed:', e);
+          UI.toast('Sync failed');
+        }
+      });
+    }
+    const signOutBtn = document.getElementById('btn-sync-signout');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', async () => {
+        try {
+          await Sync.signOut();
+          UI.toast('Signed out');
+          Stats.render();
+        } catch (e) {
+          console.warn('Sign-out failed:', e);
+          UI.toast('Sign-out failed');
+        }
+      });
+    }
 
     document.getElementById('btn-export').addEventListener('click', () => {
       const data = Storage.exportData();

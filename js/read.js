@@ -277,6 +277,7 @@ const Read = (() => {
     currentSnippet = snippet;
     flaggedChars = new Set();
     lookedUpChars = new Set();
+    Sync.lock();
     renderPassage();
   }
 
@@ -314,7 +315,10 @@ const Read = (() => {
     `;
 
     // Event: back button
-    el.querySelector('.read-back-btn').addEventListener('click', render);
+    el.querySelector('.read-back-btn').addEventListener('click', () => {
+      Sync.unlock();
+      render();
+    });
 
     // Event: next/done button
     const nextBtn = el.querySelector('.read-next-btn');
@@ -338,6 +342,7 @@ const Read = (() => {
         if (sessionSnippets.length > 1) {
           showSummary();
         } else {
+          Sync.unlock();
           render();
         }
       });
@@ -453,6 +458,7 @@ const Read = (() => {
   function showSummary() {
     // Clean up event listener
     document.removeEventListener('click', handleOutsideClick);
+    Sync.unlock();
 
     const el = document.getElementById('screen-read');
     const duration = Math.round((Date.now() - sessionStats.startTime) / 1000);

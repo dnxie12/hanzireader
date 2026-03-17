@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v8';
+const CACHE_NAME = 'hanzi-reader-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './js/ui.js',
   './js/vendor/fsrs.umd.js',
   './js/srs.js',
+  './js/sync.js',
   './js/home.js',
   './js/read.js',
   './js/study.js',
@@ -37,6 +38,15 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  // Don't cache Firebase/Google API requests
+  if (url.hostname.includes('googleapis.com') ||
+      url.hostname.includes('firebaseio.com') ||
+      url.hostname.includes('gstatic.com') ||
+      url.hostname === 'accounts.google.com' ||
+      url.hostname.endsWith('.firebaseapp.com')) {
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );

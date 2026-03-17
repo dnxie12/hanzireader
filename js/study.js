@@ -14,6 +14,7 @@ const Study = (() => {
   function render() {
     const el = document.getElementById('screen-study');
     buildSession();
+    Sync.lock();
 
     const hasMoreNew = Data.getNextNewChars(1).length > 0;
     if (queue.length === 0 && newQueue.length === 0) {
@@ -26,6 +27,7 @@ const Study = (() => {
           <button class="btn-secondary" id="btn-back-home" style="margin-top:8px;">Back Home</button>
         </div>
       `;
+      Sync.unlock();
       document.getElementById('btn-back-home').addEventListener('click', () => App.navigate('home'));
       if (hasMoreNew) {
         document.getElementById('btn-learn-more').addEventListener('click', () => {
@@ -332,6 +334,7 @@ const Study = (() => {
       ? Math.round(sessionStats.correct / sessionStats.reviews * 100) : 0;
 
     Storage.updateStreak();
+    Sync.unlock();
 
     el.innerHTML = `
       <div class="summary-container fade-in">

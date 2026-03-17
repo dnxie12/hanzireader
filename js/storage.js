@@ -15,7 +15,10 @@ const Storage = (() => {
       newPerDay: 25,
       theme: 'system',
       placementDone: false,
-      currentIndex: 0
+      currentIndex: 0,
+      syncEnabled: false,
+      lastSyncTime: null,
+      settingsModified: null
     }
   };
 
@@ -80,6 +83,12 @@ const Storage = (() => {
   function updateSettings(updates) {
     const p = getProgress();
     p.settings = { ...DEFAULT_PROGRESS.settings, ...p.settings, ...updates };
+    // Auto-stamp settingsModified for user preference changes (not sync-meta)
+    const syncMetaKeys = ['syncEnabled', 'lastSyncTime', 'settingsModified'];
+    const hasUserPrefChange = Object.keys(updates).some(k => !syncMetaKeys.includes(k));
+    if (hasUserPrefChange) {
+      p.settings.settingsModified = new Date().toISOString();
+    }
     saveProgress(p);
     return p.settings;
   }
@@ -234,6 +243,7 @@ const Storage = (() => {
     getSettings, updateSettings,
     updateStreak, recordDailyReview, recordNewCard, getDailyStats,
     addReadingFlag, consumeReadingFlags, recordSnippetRead, getReadHistory,
+    validateSRS, validateProgress,
     exportData, importData, clearAll
   };
 })();
