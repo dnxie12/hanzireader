@@ -43,7 +43,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 44px;
+  --tab-height: 49px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -132,11 +132,11 @@ body {
   left: 0;
   right: 0;
   height: calc(var(--tab-height) + var(--safe-bottom));
-  padding-top: calc(var(--safe-bottom) * 0.3);
-  padding-bottom: calc(var(--safe-bottom) * 0.7);
+  padding-bottom: var(--safe-bottom);
   background: var(--bg-card);
   border-top: 1px solid var(--border);
   display: flex;
+  align-items: center;
   justify-content: center;
   z-index: 100;
 }
@@ -154,7 +154,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 6px 0;
+  padding: 4px 0;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -166,11 +166,11 @@ body {
 }
 
 .tab svg {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   stroke: currentColor;
   fill: none;
-  stroke-width: 1.8;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
