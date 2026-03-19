@@ -43,7 +43,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 48px;
+  --tab-height: 44px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -132,7 +132,8 @@ body {
   left: 0;
   right: 0;
   height: calc(var(--tab-height) + var(--safe-bottom));
-  padding-bottom: var(--safe-bottom);
+  padding-top: calc(var(--safe-bottom) * 0.3);
+  padding-bottom: calc(var(--safe-bottom) * 0.7);
   background: var(--bg-card);
   border-top: 1px solid var(--border);
   display: flex;
