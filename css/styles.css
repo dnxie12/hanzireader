@@ -99,7 +99,7 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   max-width: var(--max-width);
   margin: 0 auto;
 }
