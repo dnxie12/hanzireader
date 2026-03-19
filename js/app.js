@@ -80,6 +80,12 @@ const App = (() => {
     } else {
       root.setAttribute('data-theme', theme);
     }
+    // Update theme-color meta tags to match active theme
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    const color = isDark ? '#0F172A' : '#FAFAFA';
+    document.querySelectorAll('meta[name="theme-color"]').forEach(meta => {
+      meta.setAttribute('content', color);
+    });
   }
 
   // Listen for system theme changes
