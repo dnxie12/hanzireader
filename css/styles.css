@@ -43,7 +43,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 49px;
+  --tab-height: 44px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
