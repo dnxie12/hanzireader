@@ -270,7 +270,7 @@ body {
 .literacy-bar {
   background: var(--bg-secondary);
   border-radius: 12px;
-  height: 24px;
+  height: 36px;
   overflow: hidden;
   margin: 16px 0;
   position: relative;
@@ -289,7 +289,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
 }
