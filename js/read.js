@@ -10,6 +10,7 @@ const Read = (() => {
   let currentDiffFilter = 'all';
   let cachedGroups = null;
   let cachedRecentlyRead = null;
+  let cachedProfile = null;
   let touchStartY = 0;
 
   // --- User Profile (computed once per session) ---
@@ -127,10 +128,11 @@ const Read = (() => {
   }
 
   // --- Session Selection ---
-  function selectSessionSnippets(profile, count) {
+  function selectSessionSnippets(profile, count, diffFilter) {
     count = count || 5;
     const recentlyRead = Storage.getReadHistory();
-    const snippets = (window.SNIPPET_DATA || []);
+    let snippets = (window.SNIPPET_DATA || []);
+    if (diffFilter && diffFilter !== 'all') snippets = snippets.filter(s => String(s.staticDiff) === String(diffFilter));
 
     const scored = snippets
       .map(s => ({ snippet: s, score: scoreSnippet(s, profile, recentlyRead) }))
@@ -233,9 +235,17 @@ const Read = (() => {
       chip.classList.toggle('active', chip.dataset.diff === String(filterDiff));
     });
 
-    // Show/hide start session button (only visible when showing all)
+    // Update start session button to reflect filtered scope
     const startBtn = document.getElementById('read-start-btn');
-    if (startBtn) startBtn.style.display = filterDiff === 'all' ? '' : 'none';
+    if (startBtn) {
+      const preview = selectSessionSnippets(cachedProfile, 5, filterDiff);
+      if (preview.length > 0) {
+        startBtn.textContent = `Start Session (${preview.length} passages)`;
+        startBtn.style.display = '';
+      } else {
+        startBtn.style.display = 'none';
+      }
+    }
 
     // Scroll to top of list
     el.scrollTop = 0;
@@ -255,9 +265,11 @@ const Read = (() => {
     currentDiffFilter = 'all';
     cachedGroups = null;
     cachedRecentlyRead = null;
+    cachedProfile = null;
 
     const el = document.getElementById('screen-read');
     const profile = buildUserProfile();
+    cachedProfile = profile;
     const knownCount = profile.known.size + profile.fragile.size + profile.learning.size;
 
     if (knownCount < 20 || !window.SNIPPET_DATA || window.SNIPPET_DATA.length === 0) {
@@ -329,10 +341,10 @@ const Read = (() => {
     const startBtn = document.getElementById('read-start-btn');
     if (startBtn) {
       startBtn.addEventListener('click', () => {
-        sessionSnippets = selectSessionSnippets(profile);
+        sessionSnippets = selectSessionSnippets(profile, 5, currentDiffFilter);
         sessionIndex = 0;
         sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
-        openSnippet(sessionSnippets[0]);
+        if (sessionSnippets.length > 0) openSnippet(sessionSnippets[0]);
       });
     }
 
