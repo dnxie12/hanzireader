@@ -7,6 +7,9 @@ const Read = (() => {
   let flaggedChars = new Set();
   let lookedUpChars = new Set();
   let sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: 0 };
+  let currentDiffFilter = 'all';
+  let cachedGroups = null;
+  let cachedRecentlyRead = null;
   let touchStartY = 0;
 
   // --- User Profile (computed once per session) ---
@@ -165,62 +168,17 @@ const Read = (() => {
     return 'learning';
   }
 
-  // --- Render snippet list ---
-  function render() {
-    currentSnippet = null;
-    sessionSnippets = [];
-    sessionIndex = 0;
-    flaggedChars = new Set();
-    lookedUpChars = new Set();
-    sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
+  const GROUP_LABELS = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' };
 
-    const el = document.getElementById('screen-read');
-    const profile = buildUserProfile();
-    const knownCount = profile.known.size + profile.fragile.size + profile.learning.size;
-
-    if (knownCount < 20 || !window.SNIPPET_DATA || window.SNIPPET_DATA.length === 0) {
-      el.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          <h3>Keep studying to unlock reading practice</h3>
-          <p>You need to learn at least 20 characters. Currently known: ${knownCount} characters.</p>
-          <button class="btn-primary" id="go-study-btn" style="max-width:280px;">Go Study</button>
-        </div>
-      `;
-      document.getElementById('go-study-btn').addEventListener('click', () => App.navigate('study'));
-      return;
-    }
-
-    const recentlyRead = Storage.getReadHistory();
-    const allSnippets = (window.SNIPPET_DATA || []).map(s => {
-      const cov = analyzeSnippetCoverage(s, profile);
-      return { ...s, pctKnown: Math.round(cov.coverageRatio * 100) };
-    });
-
-    // Group by difficulty
-    const groups = { 1: [], 2: [], 3: [], 4: [] };
-    for (const s of allSnippets) {
-      groups[s.staticDiff] = groups[s.staticDiff] || [];
-      groups[s.staticDiff].push(s);
-    }
-
-    const groupLabels = { 1: 'BEGINNER', 2: 'INTERMEDIATE', 3: 'ADVANCED', 4: 'EXPERT' };
-    let html = `<div class="read-header"><h2>Reading Practice</h2></div>`;
-
-    // Start session button
-    const sessionSnippetsPreview = selectSessionSnippets(profile);
-    if (sessionSnippetsPreview.length > 0) {
-      html += `<button class="btn-primary" id="read-start-btn">Start Session (${sessionSnippetsPreview.length} passages)</button>`;
-    }
-
+  function buildSnippetListHTML(groups, recentlyRead, filterDiff) {
+    let html = '';
     for (const diff of [1, 2, 3, 4]) {
+      if (filterDiff !== 'all' && String(diff) !== String(filterDiff)) continue;
       const group = groups[diff];
       if (!group || group.length === 0) continue;
 
-      // Sort: highest coverage first
-      group.sort((a, b) => b.pctKnown - a.pctKnown);
-
-      html += `<div class="read-group"><h3 class="read-group-label">${groupLabels[diff]}</h3>`;
+      html += `<div class="read-group">`;
+      if (filterDiff === 'all') html += `<h3 class="read-group-label">${GROUP_LABELS[diff]}</h3>`;
 
       for (const s of group) {
         const isRead = !!recentlyRead[s.id];
@@ -244,8 +202,128 @@ const Read = (() => {
 
       html += `</div>`;
     }
+    return html;
+  }
+
+  function attachSnippetListeners(el) {
+    el.querySelectorAll('.snippet-card:not(.locked)').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        const snippet = (window.SNIPPET_DATA || []).find(s => s.id === id);
+        if (snippet) {
+          sessionSnippets = [snippet];
+          sessionIndex = 0;
+          openSnippet(snippet);
+        }
+      });
+    });
+  }
+
+  function renderSnippetList(filterDiff) {
+    currentDiffFilter = filterDiff;
+    const container = document.getElementById('read-snippet-list');
+    if (!container || !cachedGroups || !cachedRecentlyRead) return;
+
+    container.innerHTML = buildSnippetListHTML(cachedGroups, cachedRecentlyRead, filterDiff);
+    attachSnippetListeners(container);
+
+    // Update active chip
+    const el = document.getElementById('screen-read');
+    el.querySelectorAll('.read-difficulty-nav .filter-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.diff === String(filterDiff));
+    });
+
+    // Show/hide start session button (only visible when showing all)
+    const startBtn = document.getElementById('read-start-btn');
+    if (startBtn) startBtn.style.display = filterDiff === 'all' ? '' : 'none';
+
+    // Scroll to top of list
+    el.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+
+  // --- Render snippet list ---
+  function render() {
+    // Clean up any leftover document listener from reading view
+    document.removeEventListener('click', handleOutsideClick);
+    currentSnippet = null;
+    sessionSnippets = [];
+    sessionIndex = 0;
+    flaggedChars = new Set();
+    lookedUpChars = new Set();
+    sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
+    currentDiffFilter = 'all';
+    cachedGroups = null;
+    cachedRecentlyRead = null;
+
+    const el = document.getElementById('screen-read');
+    const profile = buildUserProfile();
+    const knownCount = profile.known.size + profile.fragile.size + profile.learning.size;
+
+    if (knownCount < 20 || !window.SNIPPET_DATA || window.SNIPPET_DATA.length === 0) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <h3>Keep studying to unlock reading practice</h3>
+          <p>You need to learn at least 20 characters. Currently known: ${knownCount} characters.</p>
+          <button class="btn-primary" id="go-study-btn" style="max-width:280px;">Go Study</button>
+        </div>
+      `;
+      document.getElementById('go-study-btn').addEventListener('click', () => App.navigate('study'));
+      return;
+    }
+
+    cachedRecentlyRead = Storage.getReadHistory();
+    const allSnippets = (window.SNIPPET_DATA || []).map(s => {
+      const cov = analyzeSnippetCoverage(s, profile);
+      return { ...s, pctKnown: Math.round(cov.coverageRatio * 100) };
+    });
+
+    // Group by difficulty and sort each group
+    const groups = { 1: [], 2: [], 3: [], 4: [] };
+    for (const s of allSnippets) {
+      groups[s.staticDiff] = groups[s.staticDiff] || [];
+      groups[s.staticDiff].push(s);
+    }
+    for (const diff of [1, 2, 3, 4]) {
+      if (groups[diff]) groups[diff].sort((a, b) => b.pctKnown - a.pctKnown);
+    }
+    cachedGroups = groups;
+
+    // Count unlocked snippets per difficulty
+    const unlockedCounts = {};
+    for (const diff of [1, 2, 3, 4]) {
+      unlockedCounts[diff] = (groups[diff] || []).filter(s => s.pctKnown >= 60).length;
+    }
+    const totalUnlocked = Object.values(unlockedCounts).reduce((a, b) => a + b, 0);
+
+    // Build nav chips
+    const totalSnippets = allSnippets.length;
+    let chipHtml = `<button class="filter-chip active" data-diff="all">All (${totalUnlocked}/${totalSnippets})</button>`;
+    for (const diff of [1, 2, 3, 4]) {
+      if (!groups[diff] || groups[diff].length === 0) continue;
+      chipHtml += `<button class="filter-chip" data-diff="${diff}">${GROUP_LABELS[diff]} (${unlockedCounts[diff]}/${groups[diff].length})</button>`;
+    }
+
+    let html = `<div class="read-sticky-nav">
+      <div class="read-header"><h2>Reading Practice</h2></div>
+      <div class="read-difficulty-nav">${chipHtml}</div>
+    </div>`;
+
+    // Start session button
+    const sessionPreview = selectSessionSnippets(profile);
+    if (sessionPreview.length > 0) {
+      html += `<button class="btn-primary" id="read-start-btn">Start Session (${sessionPreview.length} passages)</button>`;
+    }
+
+    html += `<div id="read-snippet-list">${buildSnippetListHTML(groups, cachedRecentlyRead, 'all')}</div>`;
 
     el.innerHTML = html;
+
+    // Chip click listeners
+    el.querySelectorAll('.read-difficulty-nav .filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => renderSnippetList(chip.dataset.diff));
+    });
 
     // Start session button
     const startBtn = document.getElementById('read-start-btn');
@@ -259,17 +337,7 @@ const Read = (() => {
     }
 
     // Individual snippet tap
-    el.querySelectorAll('.snippet-card:not(.locked)').forEach(card => {
-      card.addEventListener('click', () => {
-        const id = card.dataset.id;
-        const snippet = (window.SNIPPET_DATA || []).find(s => s.id === id);
-        if (snippet) {
-          sessionSnippets = [snippet];
-          sessionIndex = 0;
-          openSnippet(snippet);
-        }
-      });
-    });
+    attachSnippetListeners(el);
   }
 
   // --- Reading View ---

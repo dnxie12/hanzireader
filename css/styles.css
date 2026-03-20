@@ -1024,8 +1024,30 @@ body {
 }
 
 /* --- Read Screen --- */
+.read-sticky-nav {
+  position: sticky;
+  top: calc(-1 * (var(--safe-top) + 20px));
+  z-index: 10;
+  margin: 0 -16px;
+  padding: calc(var(--safe-top) + 20px) 16px 4px;
+  background: var(--bg-primary);
+}
+
+.read-difficulty-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.read-difficulty-nav::-webkit-scrollbar {
+  display: none;
+}
+
 .read-header {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .read-header h2 {
