@@ -228,7 +228,7 @@ const Read = (() => {
     if (preview.length > 0) {
       return { text: `Start Session (${preview.length} passages)`, disabled: false };
     }
-    return { text: 'Start Session (No Passages Available)', disabled: true };
+    return { text: 'Start Session (No Passages Unlocked)', disabled: true };
   }
 
   function renderSnippetList(filterDiff) {
@@ -265,7 +265,7 @@ const Read = (() => {
 
     // Update hide-read toggle
     const hideBtn = document.getElementById('read-hide-read-btn');
-    if (hideBtn) hideBtn.classList.toggle('active', hideReadSnippets);
+    if (hideBtn) hideBtn.setAttribute('aria-checked', hideReadSnippets);
 
     // Update start session button
     const startBtn = document.getElementById('read-start-btn');
@@ -351,7 +351,10 @@ const Read = (() => {
     let html = `<div class="read-sticky-nav">
       <div class="read-header">
         <h2>Reading Practice</h2>
-        <button class="read-hide-read-toggle" id="read-hide-read-btn">Hide Read</button>
+        <div class="read-toggle" id="read-toggle-wrap">
+          <span class="read-toggle-label" id="hide-read-label">Hide read</span>
+          <button class="read-toggle-switch" id="read-hide-read-btn" role="switch" aria-checked="false" aria-labelledby="hide-read-label"></button>
+        </div>
       </div>
       <div class="read-difficulty-nav">${chipHtml}</div>
     </div>`;
@@ -368,9 +371,10 @@ const Read = (() => {
       chip.addEventListener('click', () => renderSnippetList(chip.dataset.diff));
     });
 
-    // Hide-read toggle
-    document.getElementById('read-hide-read-btn').addEventListener('click', () => {
+    // Hide-read toggle (whole wrapper is tappable)
+    document.getElementById('read-toggle-wrap').addEventListener('click', () => {
       hideReadSnippets = !hideReadSnippets;
+      document.getElementById('read-hide-read-btn').setAttribute('aria-checked', hideReadSnippets);
       renderSnippetList(currentDiffFilter);
     });
 
