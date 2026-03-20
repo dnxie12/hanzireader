@@ -8,6 +8,7 @@ const Read = (() => {
   let lookedUpChars = new Set();
   let sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: 0 };
   let currentDiffFilter = 'all';
+  let hideReadSnippets = false;
   let cachedGroups = null;
   let cachedRecentlyRead = null;
   let cachedProfile = null;
@@ -172,22 +173,21 @@ const Read = (() => {
 
   const GROUP_LABELS = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' };
 
-  function buildSnippetListHTML(groups, recentlyRead, filterDiff) {
+  function buildSnippetListHTML(groups, recentlyRead, filterDiff, hideRead) {
     let html = '';
     for (const diff of [1, 2, 3, 4]) {
       if (filterDiff !== 'all' && String(diff) !== String(filterDiff)) continue;
       const group = groups[diff];
       if (!group || group.length === 0) continue;
 
-      html += `<div class="read-group">`;
-      if (filterDiff === 'all') html += `<h3 class="read-group-label">${GROUP_LABELS[diff]}</h3>`;
-
+      let cardsHtml = '';
       for (const s of group) {
         const isRead = !!recentlyRead[s.id];
+        if (hideRead && isRead) continue;
         const isLocked = s.pctKnown < 60;
         const preview = s.text.slice(0, 30) + (s.text.length > 30 ? '…' : '');
 
-        html += `
+        cardsHtml += `
           <div class="snippet-card${isLocked ? ' locked' : ''}" data-id="${UI.esc(s.id)}">
             <div class="snippet-preview">${UI.esc(preview)}</div>
             <div class="snippet-meta">
@@ -202,7 +202,9 @@ const Read = (() => {
         `;
       }
 
-      html += `</div>`;
+      if (cardsHtml) {
+        html += `<div class="read-group"><h3 class="read-group-label">${GROUP_LABELS[diff]}</h3>${cardsHtml}</div>`;
+      }
     }
     return html;
   }
@@ -221,30 +223,56 @@ const Read = (() => {
     });
   }
 
+  function getSessionButtonHTML(profile, filterDiff) {
+    const preview = selectSessionSnippets(profile, 5, filterDiff);
+    if (preview.length > 0) {
+      return { text: `Start Session (${preview.length} passages)`, disabled: false };
+    }
+    return { text: 'Start Session (No Passages Available)', disabled: true };
+  }
+
   function renderSnippetList(filterDiff) {
     currentDiffFilter = filterDiff;
     const container = document.getElementById('read-snippet-list');
     if (!container || !cachedGroups || !cachedRecentlyRead) return;
 
-    container.innerHTML = buildSnippetListHTML(cachedGroups, cachedRecentlyRead, filterDiff);
+    container.innerHTML = buildSnippetListHTML(cachedGroups, cachedRecentlyRead, filterDiff, hideReadSnippets);
     attachSnippetListeners(container);
 
-    // Update active chip
     const el = document.getElementById('screen-read');
+
+    // Update active chip
     el.querySelectorAll('.read-difficulty-nav .filter-chip').forEach(chip => {
       chip.classList.toggle('active', chip.dataset.diff === String(filterDiff));
     });
 
-    // Update start session button to reflect filtered scope
+    // Update chip counts to reflect hide-read state
+    el.querySelectorAll('.read-difficulty-nav .filter-chip').forEach(chip => {
+      const diff = chip.dataset.diff;
+      const diffs = diff === 'all' ? [1, 2, 3, 4] : [Number(diff)];
+      let unlocked = 0, total = 0;
+      for (const d of diffs) {
+        const group = cachedGroups[d] || [];
+        for (const s of group) {
+          if (hideReadSnippets && cachedRecentlyRead[s.id]) continue;
+          total++;
+          if (s.pctKnown >= 60) unlocked++;
+        }
+      }
+      const label = diff === 'all' ? 'All' : GROUP_LABELS[Number(diff)];
+      chip.textContent = `${label} (${unlocked}/${total})`;
+    });
+
+    // Update hide-read toggle
+    const hideBtn = document.getElementById('read-hide-read-btn');
+    if (hideBtn) hideBtn.classList.toggle('active', hideReadSnippets);
+
+    // Update start session button
     const startBtn = document.getElementById('read-start-btn');
     if (startBtn) {
-      const preview = selectSessionSnippets(cachedProfile, 5, filterDiff);
-      if (preview.length > 0) {
-        startBtn.textContent = `Start Session (${preview.length} passages)`;
-        startBtn.style.display = '';
-      } else {
-        startBtn.style.display = 'none';
-      }
+      const btn = getSessionButtonHTML(cachedProfile, filterDiff);
+      startBtn.textContent = btn.text;
+      startBtn.classList.toggle('disabled', btn.disabled);
     }
 
     // Scroll to top of list
@@ -263,6 +291,7 @@ const Read = (() => {
     lookedUpChars = new Set();
     sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
     currentDiffFilter = 'all';
+    hideReadSnippets = false;
     cachedGroups = null;
     cachedRecentlyRead = null;
     cachedProfile = null;
@@ -317,18 +346,20 @@ const Read = (() => {
       chipHtml += `<button class="filter-chip" data-diff="${diff}">${GROUP_LABELS[diff]} (${unlockedCounts[diff]}/${groups[diff].length})</button>`;
     }
 
+    const btn = getSessionButtonHTML(profile);
+
     let html = `<div class="read-sticky-nav">
-      <div class="read-header"><h2>Reading Practice</h2></div>
+      <div class="read-header">
+        <h2>Reading Practice</h2>
+        <button class="read-hide-read-toggle" id="read-hide-read-btn">Hide Read</button>
+      </div>
       <div class="read-difficulty-nav">${chipHtml}</div>
     </div>`;
 
-    // Start session button
-    const sessionPreview = selectSessionSnippets(profile);
-    if (sessionPreview.length > 0) {
-      html += `<button class="btn-primary" id="read-start-btn">Start Session (${sessionPreview.length} passages)</button>`;
-    }
+    // Start session button (always present, disabled when no passages)
+    html += `<button class="btn-primary${btn.disabled ? ' disabled' : ''}" id="read-start-btn">${btn.text}</button>`;
 
-    html += `<div id="read-snippet-list">${buildSnippetListHTML(groups, cachedRecentlyRead, 'all')}</div>`;
+    html += `<div id="read-snippet-list">${buildSnippetListHTML(groups, cachedRecentlyRead, 'all', false)}</div>`;
 
     el.innerHTML = html;
 
@@ -337,16 +368,20 @@ const Read = (() => {
       chip.addEventListener('click', () => renderSnippetList(chip.dataset.diff));
     });
 
+    // Hide-read toggle
+    document.getElementById('read-hide-read-btn').addEventListener('click', () => {
+      hideReadSnippets = !hideReadSnippets;
+      renderSnippetList(currentDiffFilter);
+    });
+
     // Start session button
     const startBtn = document.getElementById('read-start-btn');
-    if (startBtn) {
-      startBtn.addEventListener('click', () => {
-        sessionSnippets = selectSessionSnippets(profile, 5, currentDiffFilter);
-        sessionIndex = 0;
-        sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
-        if (sessionSnippets.length > 0) openSnippet(sessionSnippets[0]);
-      });
-    }
+    startBtn.addEventListener('click', () => {
+      sessionSnippets = selectSessionSnippets(profile, 5, currentDiffFilter);
+      sessionIndex = 0;
+      sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
+      if (sessionSnippets.length > 0) openSnippet(sessionSnippets[0]);
+    });
 
     // Individual snippet tap
     attachSnippetListeners(el);

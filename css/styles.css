@@ -344,6 +344,12 @@ body {
   transform: scale(0.98);
 }
 
+.btn-primary.disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -1046,7 +1052,27 @@ body {
   display: none;
 }
 
+.read-hide-read-toggle {
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.read-hide-read-toggle.active {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .read-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 8px;
 }
 
