@@ -142,6 +142,12 @@ const Stats = (() => {
         </div>
         <input type="file" id="import-file" accept=".json" style="display:none;">
       </div>
+
+      <div style="text-align:center; padding:1rem 0 0.5rem; font-size:13px;">
+        <a href="https://github.com/dnxie12/hanzireader" target="_blank" rel="noopener" style="color:var(--text-muted); text-decoration:none;">GitHub</a>
+        <span style="color:var(--text-muted); margin:0 6px;">·</span>
+        <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--text-muted); text-decoration:none;">Privacy</a>
+      </div>
     `;
 
     // Event listeners
