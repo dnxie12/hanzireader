@@ -66,6 +66,7 @@ const Home = (() => {
         ` : ''}
       </div>
       ` : ''}
+
     `;
 
     document.getElementById('home-study-btn').addEventListener('click', () => {
