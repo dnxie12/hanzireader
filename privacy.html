@@ -23,6 +23,13 @@
   </style>
 </head>
 <body>
+  <script>
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    });
+  </script>
   <div class="privacy-container">
     <a href="/" class="back-link">← Back to Hanzi Reader</a>
     <h1>Privacy Policy</h1>
