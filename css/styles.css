@@ -140,7 +140,7 @@ body {
   }
 
   .screen {
-    padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 20px);
+    padding-bottom: calc(var(--tab-height) + 20px);
   }
 }
 
@@ -161,8 +161,7 @@ body {
 
 @media (display-mode: standalone) {
   .tab-bar {
-    height: calc(var(--tab-height) + var(--safe-bottom));
-    padding-bottom: var(--safe-bottom);
+    height: var(--tab-height);
   }
 }
 
