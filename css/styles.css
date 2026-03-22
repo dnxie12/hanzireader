@@ -45,7 +45,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 42px;
+  --tab-height: 38px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -178,7 +178,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 4px 0;
+  padding: 6px 0 2px;
   background: none;
   border: none;
   color: var(--text-muted);
