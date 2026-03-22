@@ -43,7 +43,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 30px;
+  --tab-height: 48px;
   --max-width: 768px;
   --screen-bottom-gap: 20px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -132,6 +132,10 @@ body {
 }
 
 @media (display-mode: standalone) {
+  :root {
+    --tab-height: 30px;
+  }
+
   body {
     background: var(--bg-card);
   }
@@ -1409,7 +1413,6 @@ body {
 /* Desktop: wider layout */
 @media (min-width: 600px) {
   :root {
-    --tab-height: 48px;
     --max-width: 768px;
   }
 
