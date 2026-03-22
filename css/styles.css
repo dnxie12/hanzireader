@@ -45,7 +45,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 52px;
+  --tab-height: 42px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -136,7 +136,7 @@ body {
 
 @media (display-mode: standalone) {
   body {
-    background: var(--bg-card);
+    background: var(--bg-primary);
   }
 
   .screen {
@@ -151,9 +151,7 @@ body {
   left: 0;
   right: 0;
   height: var(--tab-height);
-  background: var(--tab-bg);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background: var(--bg-primary);
   border-top: 1px solid var(--tab-border);
   display: flex;
   align-items: center;
@@ -180,8 +178,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 4px 0;
+  gap: 1px;
+  padding: 2px 0;
   background: none;
   border: none;
   color: var(--text-muted);
