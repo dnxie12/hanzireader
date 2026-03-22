@@ -8,6 +8,7 @@ const Stats = (() => {
     const total = Data.totalChars();
     const streak = Storage.getProgress().streak || { current: 0, longest: 0 };
     const settings = Storage.getSettings();
+    const hskCounts = Data.getHSKCounts();
 
     // Get last 7 days of review data
     const dailyData = [];
@@ -27,6 +28,22 @@ const Stats = (() => {
           ${stateBar('Learning', counts.learning, total, 'var(--state-learning)')}
           ${stateBar('Known', counts.review, total, 'var(--state-review)')}
           ${stateBar('Relearning', counts.relearning, total, 'var(--state-relearning)')}
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h2>HSK Progress</h2>
+        <div class="state-bars">
+          ${(() => {
+            const hskColors = ['var(--accent)', 'var(--tone-2)', 'var(--tone-3)', 'var(--tone-4)', 'var(--state-new)', 'var(--state-relearning)', 'var(--text-muted)'];
+            const levels = Object.keys(hskCounts).map(Number).sort((a, b) => a - b);
+            if (levels[0] === 0) levels.push(levels.shift());
+            return levels.map((level, i) => {
+              const data = hskCounts[level];
+              const label = level === 0 ? 'Beyond' : 'HSK ' + level;
+              return hskBar(label, data.known, data.total, hskColors[i % hskColors.length]);
+            }).join('');
+          })()}
         </div>
       </div>
 
@@ -245,6 +262,19 @@ const Stats = (() => {
           <div class="state-bar-fill" style="width:${pct}%; background:${color};"></div>
         </div>
         <span class="state-bar-count">${count}</span>
+      </div>
+    `;
+  }
+
+  function hskBar(label, known, total, color) {
+    const pct = total > 0 ? (known / total * 100) : 0;
+    return `
+      <div class="state-bar-row">
+        <span class="state-bar-label">${label}</span>
+        <div class="state-bar-track">
+          <div class="state-bar-fill" style="width:${pct}%; background:${color};"></div>
+        </div>
+        <span class="state-bar-count" style="width:auto;min-width:40px;">${known}/${total}</span>
       </div>
     `;
   }

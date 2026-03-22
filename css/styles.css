@@ -43,7 +43,7 @@
   --rating-easy: #3B82F6;
 
   /* Layout */
-  --tab-height: 40px;
+  --tab-height: 30px;
   --max-width: 768px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -166,7 +166,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 0;
+  padding: 6px 0 0;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -641,6 +641,15 @@ body {
   background: var(--accent-light);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.filter-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 2px;
 }
 
 .char-grid {

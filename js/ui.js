@@ -99,6 +99,7 @@ const UI = (() => {
           <span class="meta-tag">Strokes: ${esc(info.s)}</span>
           <span class="meta-tag">Freq: #${esc(info.f)}</span>
           <span class="meta-tag">Status: ${stateLabel}</span>
+          <span class="meta-tag">${(info.h || 0) > 0 ? 'HSK ' + esc(info.h) : 'Beyond HSK'}</span>
         </div>
       </div>
 

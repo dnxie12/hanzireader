@@ -131,9 +131,41 @@ const Data = (() => {
     return result;
   }
 
+  // Get HSK level for a character (0 = Beyond HSK)
+  function getHSKLevel(char) {
+    const info = getChar(char);
+    return info ? (info.h || 0) : 0;
+  }
+
+  // Filter characters by HSK level (0 = Beyond HSK)
+  function filterByHSK(level) {
+    const results = [];
+    for (const [char, info] of Object.entries(window.CHAR_DATA || {})) {
+      if ((info.h || 0) === level) results.push(char);
+    }
+    return results;
+  }
+
+  // Get per-HSK-level known/total counts
+  function getHSKCounts() {
+    const srs = Storage.getSRS();
+    const levels = {};
+    for (const [char, info] of Object.entries(window.CHAR_DATA || {})) {
+      const h = info.h || 0;
+      if (!levels[h]) levels[h] = { total: 0, known: 0 };
+      levels[h].total++;
+      const card = srs[char];
+      if (card && (card.state === 2 || card.state === 3)) {
+        levels[h].known++;
+      }
+    }
+    return levels;
+  }
+
   return {
     getChar, getAllChars, getLearnOrder, getRadicals, totalChars,
     search, filterByRadical, filterByState,
-    getLiteracyPercent, getStateCounts, getNextNewChars
+    getLiteracyPercent, getStateCounts, getNextNewChars,
+    getHSKLevel, filterByHSK, getHSKCounts
   };
 })();

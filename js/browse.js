@@ -13,6 +13,7 @@ const Browse = (() => {
 
   // Cache radical counts — CHAR_DATA never changes at runtime
   let cachedRadicals = null;
+  let cachedHSKLevels = null;
   function getTopRadicals() {
     if (cachedRadicals) return cachedRadicals;
     const counts = {};
@@ -25,6 +26,19 @@ const Browse = (() => {
       .slice(0, 25)
       .map(([r]) => r);
     return cachedRadicals;
+  }
+
+  function getHSKLevels() {
+    if (cachedHSKLevels) return cachedHSKLevels;
+    const levels = new Set();
+    for (const info of Object.values(window.CHAR_DATA || {})) {
+      levels.add(info.h || 0);
+    }
+    const sorted = [...levels].sort((a, b) => a - b);
+    // Move 0 ("Beyond HSK") to end
+    if (sorted[0] === 0) sorted.push(sorted.shift());
+    cachedHSKLevels = sorted;
+    return cachedHSKLevels;
   }
 
   function render() {
@@ -132,11 +146,17 @@ const Browse = (() => {
     ];
 
     const topRadicals = getTopRadicals();
+    const hskLevels = getHSKLevels();
 
     container.innerHTML =
       filters.map(f =>
         `<button class="filter-chip ${currentFilter === f.id ? 'active' : ''}" data-filter="${f.id}">${f.label}</button>`
       ).join('') +
+      '<span class="filter-separator"></span>' +
+      hskLevels.map(level =>
+        `<button class="filter-chip ${currentFilter === 'h:' + level ? 'active' : ''}" data-filter="h:${level}">${level === 0 ? 'Beyond' : 'HSK ' + level}</button>`
+      ).join('') +
+      '<span class="filter-separator"></span>' +
       topRadicals.map(r =>
         `<button class="filter-chip ${currentFilter === 'r:' + r ? 'active' : ''}" data-filter="r:${r}">${r}</button>`
       ).join('');
@@ -147,6 +167,8 @@ const Browse = (() => {
       filteredChars = Data.search(searchQuery, searchMode);
     } else if (currentFilter === 'all') {
       filteredChars = Data.getLearnOrder();
+    } else if (currentFilter.startsWith('h:')) {
+      filteredChars = Data.filterByHSK(parseInt(currentFilter.slice(2), 10));
     } else if (currentFilter.startsWith('r:')) {
       filteredChars = Data.filterByRadical(currentFilter.slice(2));
     } else {
