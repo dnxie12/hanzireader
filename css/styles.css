@@ -161,7 +161,8 @@ body {
 
 @media (display-mode: standalone) {
   .tab-bar {
-    height: var(--tab-height);
+    bottom: calc(-1 * var(--safe-bottom));
+    height: calc(var(--tab-height) + var(--safe-bottom));
   }
 }
 
