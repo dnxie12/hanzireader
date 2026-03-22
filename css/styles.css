@@ -141,7 +141,7 @@ body {
   }
 
   .tab-bar {
-    height: calc(var(--tab-height) + var(--safe-bottom) + 4px);
+    height: calc(var(--tab-height) + var(--safe-bottom) + 2px);
     padding-bottom: 0;
     align-items: flex-start;
   }
@@ -149,7 +149,7 @@ body {
   .tab-bar-inner {
     height: var(--tab-height);
     min-height: 0;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 }
 
