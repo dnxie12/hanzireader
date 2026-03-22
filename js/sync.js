@@ -28,6 +28,11 @@ const Sync = (() => {
   let visibilityListenerRegistered = false;
   let authChangeCallbacks = [];
 
+  function isPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+  }
+
   // --- SDK Loading ---
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -88,10 +93,26 @@ const Sync = (() => {
     loadSDK().then(() => {
       if (!auth) return;
       registerVisibilityListener();
-      auth.onAuthStateChanged(u => {
-        user = u;
-        authChangeCallbacks.forEach(fn => fn(u));
-        if (u) pull().catch(e => console.warn('Sync pull on init failed:', e));
+
+      // In PWA mode, handle redirect result before registering onAuthStateChanged
+      // to avoid a double-pull race (both would fire with the same user).
+      const redirectDone = isPWA()
+        ? auth.getRedirectResult().then(result => {
+            if (result && result.user) {
+              user = result.user;
+              Storage.updateSettings({ syncEnabled: true });
+              authChangeCallbacks.forEach(fn => fn(user));
+              return pull().then(() => UI.toast('Signed in and synced'));
+            }
+          }).catch(e => console.warn('Redirect result check failed:', e))
+        : Promise.resolve();
+
+      redirectDone.then(() => {
+        auth.onAuthStateChanged(u => {
+          user = u;
+          authChangeCallbacks.forEach(fn => fn(u));
+          if (u) pull().catch(e => console.warn('Sync pull on init failed:', e));
+        });
       });
     }).catch(e => console.warn('Firebase SDK load failed:', e));
   }
@@ -102,6 +123,15 @@ const Sync = (() => {
     if (!auth) throw new Error('Firebase not configured');
     registerVisibilityListener();
     const provider = new firebase.auth.GoogleAuthProvider();
+
+    if (isPWA()) {
+      // Redirect flow for PWA — popups don't work in standalone mode.
+      // syncEnabled is set in getRedirectResult handler after successful auth.
+      await auth.signInWithRedirect(provider);
+      // Page will redirect; result handled in init() via getRedirectResult()
+      return;
+    }
+
     const result = await auth.signInWithPopup(provider);
     user = result.user;
     Storage.updateSettings({ syncEnabled: true });

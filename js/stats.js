@@ -175,9 +175,12 @@ const Stats = (() => {
     if (signInBtn) {
       signInBtn.addEventListener('click', async () => {
         try {
-          await Sync.signIn();
-          UI.toast('Signed in and synced');
-          Stats.render();
+          const u = await Sync.signIn();
+          // signIn returns undefined for redirect flow (PWA) — page will redirect
+          if (u) {
+            UI.toast('Signed in and synced');
+            Stats.render();
+          }
         } catch (e) {
           console.warn('Sign-in failed:', e);
           UI.toast('Sign-in failed');
