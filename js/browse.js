@@ -152,11 +152,11 @@ const Browse = (() => {
       filters.map(f =>
         `<button class="filter-chip ${currentFilter === f.id ? 'active' : ''}" data-filter="${f.id}">${f.label}</button>`
       ).join('') +
-      '<span class="filter-separator"></span>' +
+      '<span class="filter-separator" aria-hidden="true"></span>' +
       hskLevels.map(level =>
-        `<button class="filter-chip ${currentFilter === 'h:' + level ? 'active' : ''}" data-filter="h:${level}">${level === 0 ? 'Beyond' : 'HSK ' + level}</button>`
+        `<button class="filter-chip ${currentFilter === 'h:' + level ? 'active' : ''}" data-filter="h:${level}">${level === 0 ? 'Beyond HSK' : 'HSK ' + level}</button>`
       ).join('') +
-      '<span class="filter-separator"></span>' +
+      '<span class="filter-separator" aria-hidden="true"></span>' +
       topRadicals.map(r =>
         `<button class="filter-chip ${currentFilter === 'r:' + r ? 'active' : ''}" data-filter="r:${r}">${r}</button>`
       ).join('');

@@ -672,7 +672,7 @@ body {
   background: var(--border);
   flex-shrink: 0;
   align-self: center;
-  margin: 0 2px;
+  margin: 0;
 }
 
 .char-grid {

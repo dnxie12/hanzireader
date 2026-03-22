@@ -34,16 +34,7 @@ const Stats = (() => {
       <div class="stats-section">
         <h2>HSK Progress</h2>
         <div class="state-bars">
-          ${(() => {
-            const hskColors = ['var(--accent)', 'var(--tone-2)', 'var(--tone-3)', 'var(--tone-4)', 'var(--state-new)', 'var(--state-relearning)', 'var(--text-muted)'];
-            const levels = Object.keys(hskCounts).map(Number).sort((a, b) => a - b);
-            if (levels[0] === 0) levels.push(levels.shift());
-            return levels.map((level, i) => {
-              const data = hskCounts[level];
-              const label = level === 0 ? 'Beyond' : 'HSK ' + level;
-              return hskBar(label, data.known, data.total, hskColors[i % hskColors.length]);
-            }).join('');
-          })()}
+          ${renderHSKBars(hskCounts)}
         </div>
       </div>
 
@@ -264,6 +255,27 @@ const Stats = (() => {
         <span class="state-bar-count">${count}</span>
       </div>
     `;
+  }
+
+  const HSK_COLORS = {
+    1: 'var(--accent)',
+    2: 'var(--tone-2)',
+    3: 'var(--tone-3)',
+    4: 'var(--tone-4)',
+    5: '#6366F1',
+    6: '#EC4899',
+    0: 'var(--text-muted)',
+  };
+
+  function renderHSKBars(hskCounts) {
+    const levels = Object.keys(hskCounts).map(Number).sort((a, b) => a - b);
+    if (levels[0] === 0) levels.push(levels.shift());
+    return levels.map(level => {
+      const data = hskCounts[level];
+      const label = level === 0 ? 'Beyond HSK' : 'HSK ' + level;
+      const color = HSK_COLORS[level] || 'var(--text-muted)';
+      return hskBar(label, data.known, data.total, color);
+    }).join('');
   }
 
   function hskBar(label, known, total, color) {

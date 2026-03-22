@@ -131,12 +131,6 @@ const Data = (() => {
     return result;
   }
 
-  // Get HSK level for a character (0 = Beyond HSK)
-  function getHSKLevel(char) {
-    const info = getChar(char);
-    return info ? (info.h || 0) : 0;
-  }
-
   // Filter characters by HSK level (0 = Beyond HSK)
   function filterByHSK(level) {
     const results = [];
@@ -166,6 +160,6 @@ const Data = (() => {
     getChar, getAllChars, getLearnOrder, getRadicals, totalChars,
     search, filterByRadical, filterByState,
     getLiteracyPercent, getStateCounts, getNextNewChars,
-    getHSKLevel, filterByHSK, getHSKCounts
+    filterByHSK, getHSKCounts
   };
 })();
