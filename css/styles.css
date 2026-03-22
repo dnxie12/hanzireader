@@ -139,6 +139,15 @@ body {
   .screen {
     padding-bottom: calc(var(--tab-height) + var(--safe-bottom));
   }
+
+  .tab-bar {
+    height: auto;
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .tab-bar-inner {
+    min-height: var(--tab-height);
+  }
 }
 
 /* --- Tab Bar --- */
