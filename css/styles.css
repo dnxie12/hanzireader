@@ -154,7 +154,7 @@ body {
   background: var(--bg-primary);
   border-top: 1px solid var(--tab-border);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 100;
 }
