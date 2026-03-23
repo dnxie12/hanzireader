@@ -77,21 +77,16 @@
       }
 
       try {
-        // Check if we're returning from a redirect (second load)
-        const result = await auth.getRedirectResult();
+        statusEl.textContent = 'Signing in with Google…';
+        const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
         if (result && result.user) {
-          // Auth succeeded — Firebase has persisted the session in IndexedDB.
-          // Navigate back to the main app; onAuthStateChanged will pick it up.
           statusEl.textContent = 'Sign-in complete! Returning to app…';
           statusEl.className = 'ok';
           retryBtn.style.display = 'none';
           window.location.href = new URL('index.html#stats', window.location.href).href;
           return;
         }
-
-        // First load — redirect to Google OAuth
-        statusEl.textContent = 'Redirecting to Google…';
-        await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+        showError('Sign-in returned no user.');
       } catch (e) {
         showError('Sign-in failed: ' + e.message);
       }
