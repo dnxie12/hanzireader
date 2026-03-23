@@ -87,6 +87,17 @@ const Sync = (() => {
 
   // --- Init ---
   function init() {
+    // Check for auth cookie (returning from auth.html after OAuth)
+    const authCred = getAuthCookie();
+    if (authCred) {
+      completeSignInFromCookie(authCred)
+        .catch(e => {
+          console.warn('Sign-in from cookie failed:', e);
+          UI.toast('Sign-in failed');
+        });
+      return;
+    }
+
     const settings = Storage.getSettings();
     if (!settings.syncEnabled) return;
 
@@ -101,54 +112,29 @@ const Sync = (() => {
     }).catch(e => console.warn('Firebase SDK load failed:', e));
   }
 
-  // --- Credential relay (PWA auth flow) ---
-  // Two channels: SW postMessage (cross-context) + cookie (shared on iOS)
-  function waitForCredential(timeoutMs) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
+  // --- Auth cookie (set by auth.html after OAuth redirect) ---
+  function getAuthCookie() {
+    const match = document.cookie.match(/(?:^|;\s*)hanzi_auth=([^\s;]+)/);
+    if (!match) return null;
+    try {
+      const cred = JSON.parse(atob(match[1]));
+      return cred.idToken ? cred : null;
+    } catch (e) { return null; }
+  }
 
-      function finish(cred) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeoutId);
-        clearInterval(pollId);
-        if (navigator.serviceWorker) {
-          navigator.serviceWorker.removeEventListener('message', handler);
-        }
-        // Delete the cookie
-        document.cookie = 'hanzi_auth=; max-age=0; path=/';
-        resolve(cred);
-      }
-
-      // Channel 1: SW message relay
-      function handler(event) {
-        if (!event.data || event.data.type !== 'AUTH_CREDENTIAL') return;
-        finish({ idToken: event.data.idToken, accessToken: event.data.accessToken });
-      }
-      if (navigator.serviceWorker) {
-        navigator.serviceWorker.addEventListener('message', handler);
-      }
-
-      // Channel 2: Cookie polling (works when SW relay doesn't)
-      const pollId = setInterval(() => {
-        const match = document.cookie.match(/(?:^|;\s*)hanzi_auth=([^\s;]+)/);
-        if (!match) return;
-        try {
-          const cred = JSON.parse(atob(match[1]));
-          if (cred.idToken) finish(cred);
-        } catch (e) { /* malformed cookie, ignore */ }
-      }, 500);
-
-      const timeoutId = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        clearInterval(pollId);
-        if (navigator.serviceWorker) {
-          navigator.serviceWorker.removeEventListener('message', handler);
-        }
-        reject(new Error('Sign-in timed out. Please try again.'));
-      }, timeoutMs);
-    });
+  // Called from init() when returning from auth.html with a cookie
+  async function completeSignInFromCookie(cred) {
+    await loadSDK();
+    if (!auth) return;
+    document.cookie = 'hanzi_auth=; max-age=0; path=/';
+    const credential = firebase.auth.GoogleAuthProvider.credential(cred.idToken, cred.accessToken);
+    const result = await auth.signInWithCredential(credential);
+    user = result.user;
+    Storage.updateSettings({ syncEnabled: true });
+    registerVisibilityListener();
+    authChangeCallbacks.forEach(fn => fn(user));
+    await pull();
+    UI.toast('Signed in and synced');
   }
 
   // --- Auth ---
@@ -158,26 +144,11 @@ const Sync = (() => {
     registerVisibilityListener();
 
     if (isPWA()) {
-      // Open auth.html — completes OAuth and relays the credential back
-      // via service worker message and/or a shared cookie.
-      if (navigator.serviceWorker) {
-        await navigator.serviceWorker.ready;
-      }
-
-      // Start listening before opening the window to avoid a race
-      const credentialPromise = waitForCredential(60000);
-
-      window.open(new URL('auth.html', window.location.href).href);
-
-      const { idToken, accessToken } = await credentialPromise;
-
-      const credential = firebase.auth.GoogleAuthProvider.credential(idToken, accessToken);
-      const result = await auth.signInWithCredential(credential);
-      user = result.user;
-      Storage.updateSettings({ syncEnabled: true });
-      authChangeCallbacks.forEach(fn => fn(user));
-      await pull();
-      return user;
+      // Navigate to auth.html in the same window. It handles the Google
+      // OAuth redirect flow and stores the credential in a cookie before
+      // navigating back to index.html, where init() picks it up.
+      window.location.href = new URL('auth.html', window.location.href).href;
+      return new Promise(() => {}); // page is navigating away
     }
 
     // Normal browser flow — popup works fine

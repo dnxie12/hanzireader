@@ -94,10 +94,12 @@
       // Clean up browser-side session (fire-and-forget)
       auth.signOut().catch(() => {});
 
-      statusEl.textContent = 'Sign-in complete! You can close this tab and return to the app.';
+      statusEl.textContent = 'Sign-in complete! Returning to app…';
       statusEl.className = 'ok';
       retryBtn.style.display = 'none';
-      window.close();
+
+      // Navigate back to the main app (same window)
+      window.location.href = new URL('index.html#stats', window.location.href).href;
     }
 
     async function doAuth() {
