@@ -70,6 +70,28 @@
       auth = firebase.auth();
     }
 
+    async function relayCredential(credential) {
+      const reg = await navigator.serviceWorker.ready;
+      if (!reg.active) {
+        showError('Service worker not available. Please reload the app and try again.');
+        return;
+      }
+
+      reg.active.postMessage({
+        type: 'AUTH_CREDENTIAL',
+        idToken: credential.idToken,
+        accessToken: credential.accessToken
+      });
+
+      // Clean up browser-side session (fire-and-forget)
+      auth.signOut().catch(() => {});
+
+      statusEl.textContent = 'Sign-in complete! You can close this tab and return to the app.';
+      statusEl.className = 'ok';
+      retryBtn.style.display = 'none';
+      window.close();
+    }
+
     async function doAuth() {
       if (!auth) {
         showError('App not configured for sign-in.');
@@ -77,45 +99,18 @@
       }
 
       try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-
-        const result = await auth.signInWithPopup(provider);
-        const credential = result.credential;
-
-        if (!credential || !credential.idToken) {
-          showError('Could not retrieve sign-in credentials. Please try again.');
+        // Check if we're returning from a redirect (second load)
+        const result = await auth.getRedirectResult();
+        if (result && result.credential) {
+          await relayCredential(result.credential);
           return;
         }
 
-        // Relay credential to PWA via service worker
-        const reg = await navigator.serviceWorker.ready;
-        if (!reg.active) {
-          showError('Service worker not available. Please reload the app and try again.');
-          return;
-        }
-
-        reg.active.postMessage({
-          type: 'AUTH_CREDENTIAL',
-          idToken: credential.idToken,
-          accessToken: credential.accessToken
-        });
-
-        // Clean up browser-side session (fire-and-forget — don't let
-        // a signOut failure mask the successful credential relay)
-        auth.signOut().catch(() => {});
-
-        statusEl.textContent = 'Sign-in complete! You can close this tab and return to the app.';
-        statusEl.className = 'ok';
-        retryBtn.style.display = 'none';
-
-        // Attempt to auto-close (works when opened via window.open)
-        window.close();
+        // First load — redirect to Google OAuth
+        statusEl.textContent = 'Redirecting to Google…';
+        await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
       } catch (e) {
-        if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-          showError('Sign-in cancelled.');
-        } else {
-          showError('Sign-in failed: ' + e.message);
-        }
+        showError('Sign-in failed: ' + e.message);
       }
     }
 
