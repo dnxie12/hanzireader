@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v62';
+const CACHE_NAME = 'hanzi-reader-v63';
 const ASSETS = [
   './',
   './index.html',
@@ -19,8 +19,7 @@ const ASSETS = [
   './js/sw-register.js',
   './data/char_data.js',
   './data/snippets.js',
-  './manifest.json',
-  './auth.html'
+  './manifest.json'
 ];
 
 self.addEventListener('install', e => {

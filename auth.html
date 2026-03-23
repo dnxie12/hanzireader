@@ -21,6 +21,7 @@
       #status { color: #64748B; }
       #status.ok { color: #16A34A; }
       #status.err { color: #DC2626; }
+      #version { color: #94A3B8; }
     }
     .card {
       text-align: center; padding: 2rem; max-width: 320px;
@@ -33,13 +34,15 @@
       margin-top: 1rem; padding: 0.5rem 1.25rem; border: none; border-radius: 6px;
       background: #3B82F6; color: #fff; font-size: 0.95rem; cursor: pointer; display: none;
     }
+    #version { font-size: 11px; margin-top: 1.5rem; color: #475569; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Hanzi Reader</h1>
-    <div id="status">Signing in with Google…</div>
+    <div id="status">Loading…</div>
     <button id="retry">Try Again</button>
+    <div id="version">auth v3</div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -63,6 +66,13 @@
       retryBtn.style.display = 'inline-block';
     }
 
+    function goHome() {
+      statusEl.textContent = 'Sign-in complete! Returning to app…';
+      statusEl.className = 'ok';
+      retryBtn.style.display = 'none';
+      window.location.href = new URL('index.html#stats', window.location.href).href;
+    }
+
     // Initialize Firebase once (outside doAuth so retries don't crash)
     let auth = null;
     if (FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('__')) {
@@ -76,17 +86,39 @@
         return;
       }
 
+      // 1. Check if returning from a redirect (second page load)
       try {
-        statusEl.textContent = 'Signing in with Google…';
-        const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        statusEl.textContent = 'Checking sign-in status…';
+        const result = await auth.getRedirectResult();
         if (result && result.user) {
-          statusEl.textContent = 'Sign-in complete! Returning to app…';
-          statusEl.className = 'ok';
-          retryBtn.style.display = 'none';
-          window.location.href = new URL('index.html#stats', window.location.href).href;
+          goHome();
           return;
         }
-        showError('Sign-in returned no user.');
+      } catch (e) {
+        console.warn('getRedirectResult error:', e.message);
+        // Not fatal — we'll try fresh sign-in below
+      }
+
+      // 2. Try signInWithPopup (works in normal browsers, may fail in PWA WebView)
+      try {
+        statusEl.textContent = 'Opening Google sign-in…';
+        const result = await Promise.race([
+          auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('popup_timeout')), 4000))
+        ]);
+        if (result && result.user) {
+          goHome();
+          return;
+        }
+      } catch (e) {
+        console.warn('Popup sign-in failed:', e.message);
+        // Fall through to redirect
+      }
+
+      // 3. Fallback: signInWithRedirect (navigates away, returns here after OAuth)
+      try {
+        statusEl.textContent = 'Redirecting to Google…';
+        await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
       } catch (e) {
         showError('Sign-in failed: ' + e.message);
       }

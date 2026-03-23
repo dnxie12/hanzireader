@@ -113,7 +113,8 @@ const Sync = (() => {
       // auth state in IndexedDB (shared since it's the same window), so
       // onAuthStateChanged in init() picks up the signed-in user.
       Storage.updateSettings({ syncEnabled: true });
-      window.location.href = new URL('auth.html', window.location.href).href;
+      // Cache-bust so service worker doesn't serve stale auth.html
+      window.location.href = new URL('auth.html?t=' + Date.now(), window.location.href).href;
       return new Promise(() => {}); // page is navigating away
     }
 
