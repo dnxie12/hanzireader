@@ -70,38 +70,6 @@
       auth = firebase.auth();
     }
 
-    function relayCredential(credential) {
-      // Store in cookie (shared between PWA and Safari on iOS)
-      const payload = btoa(JSON.stringify({
-        idToken: credential.idToken,
-        accessToken: credential.accessToken
-      }));
-      document.cookie = 'hanzi_auth=' + payload + '; max-age=300; path=/; secure; samesite=lax';
-
-      // Also try SW relay (works when auth.html is in a separate browser context)
-      if (navigator.serviceWorker) {
-        navigator.serviceWorker.ready.then(reg => {
-          if (reg.active) {
-            reg.active.postMessage({
-              type: 'AUTH_CREDENTIAL',
-              idToken: credential.idToken,
-              accessToken: credential.accessToken
-            });
-          }
-        }).catch(() => {});
-      }
-
-      // Clean up browser-side session (fire-and-forget)
-      auth.signOut().catch(() => {});
-
-      statusEl.textContent = 'Sign-in complete! Returning to app…';
-      statusEl.className = 'ok';
-      retryBtn.style.display = 'none';
-
-      // Navigate back to the main app (same window)
-      window.location.href = new URL('index.html#stats', window.location.href).href;
-    }
-
     async function doAuth() {
       if (!auth) {
         showError('App not configured for sign-in.');
@@ -111,8 +79,13 @@
       try {
         // Check if we're returning from a redirect (second load)
         const result = await auth.getRedirectResult();
-        if (result && result.credential) {
-          await relayCredential(result.credential);
+        if (result && result.user) {
+          // Auth succeeded — Firebase has persisted the session in IndexedDB.
+          // Navigate back to the main app; onAuthStateChanged will pick it up.
+          statusEl.textContent = 'Sign-in complete! Returning to app…';
+          statusEl.className = 'ok';
+          retryBtn.style.display = 'none';
+          window.location.href = new URL('index.html#stats', window.location.href).href;
           return;
         }
 

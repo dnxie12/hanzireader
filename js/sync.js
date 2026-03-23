@@ -87,17 +87,6 @@ const Sync = (() => {
 
   // --- Init ---
   function init() {
-    // Check for auth cookie (returning from auth.html after OAuth)
-    const authCred = getAuthCookie();
-    if (authCred) {
-      completeSignInFromCookie(authCred)
-        .catch(e => {
-          console.warn('Sign-in from cookie failed:', e);
-          UI.toast('Sign-in failed');
-        });
-      return;
-    }
-
     const settings = Storage.getSettings();
     if (!settings.syncEnabled) return;
 
@@ -112,31 +101,6 @@ const Sync = (() => {
     }).catch(e => console.warn('Firebase SDK load failed:', e));
   }
 
-  // --- Auth cookie (set by auth.html after OAuth redirect) ---
-  function getAuthCookie() {
-    const match = document.cookie.match(/(?:^|;\s*)hanzi_auth=([^\s;]+)/);
-    if (!match) return null;
-    try {
-      const cred = JSON.parse(atob(match[1]));
-      return cred.idToken ? cred : null;
-    } catch (e) { return null; }
-  }
-
-  // Called from init() when returning from auth.html with a cookie
-  async function completeSignInFromCookie(cred) {
-    await loadSDK();
-    if (!auth) return;
-    document.cookie = 'hanzi_auth=; max-age=0; path=/';
-    const credential = firebase.auth.GoogleAuthProvider.credential(cred.idToken, cred.accessToken);
-    const result = await auth.signInWithCredential(credential);
-    user = result.user;
-    Storage.updateSettings({ syncEnabled: true });
-    registerVisibilityListener();
-    authChangeCallbacks.forEach(fn => fn(user));
-    await pull();
-    UI.toast('Signed in and synced');
-  }
-
   // --- Auth ---
   async function signIn() {
     await loadSDK();
@@ -145,8 +109,10 @@ const Sync = (() => {
 
     if (isPWA()) {
       // Navigate to auth.html in the same window. It handles the Google
-      // OAuth redirect flow and stores the credential in a cookie before
-      // navigating back to index.html, where init() picks it up.
+      // OAuth redirect flow, then navigates back. Firebase persists the
+      // auth state in IndexedDB (shared since it's the same window), so
+      // onAuthStateChanged in init() picks up the signed-in user.
+      Storage.updateSettings({ syncEnabled: true });
       window.location.href = new URL('auth.html', window.location.href).href;
       return new Promise(() => {}); // page is navigating away
     }
