@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+      script-src 'self' https://www.gstatic.com/firebasejs/ https://apis.google.com/;
+      style-src 'unsafe-inline';
+      frame-src https://accounts.google.com https://*.firebaseapp.com;
+      connect-src https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com;">
+  <title>Sign In — Hanzi Reader</title>
+  <style>
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #1E293B; color: #E2E8F0;
+    }
+    @media (prefers-color-scheme: light) {
+      body { background: #F8FAFC; color: #1E293B; }
+      #status { color: #64748B; }
+      #status.ok { color: #16A34A; }
+      #status.err { color: #DC2626; }
+    }
+    .card {
+      text-align: center; padding: 2rem; max-width: 320px;
+    }
+    .card h1 { font-size: 1.25rem; margin: 0 0 1rem; }
+    #status { font-size: 0.95rem; line-height: 1.5; color: #94A3B8; }
+    #status.ok { color: #4ADE80; }
+    #status.err { color: #F87171; }
+    button {
+      margin-top: 1rem; padding: 0.5rem 1.25rem; border: none; border-radius: 6px;
+      background: #3B82F6; color: #fff; font-size: 0.95rem; cursor: pointer; display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Hanzi Reader</h1>
+    <div id="status">Signing in with Google…</div>
+    <button id="retry">Try Again</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script>
+    const FIREBASE_CONFIG = {
+      apiKey: "__FIREBASE_API_KEY__",
+      authDomain: "__FIREBASE_AUTH_DOMAIN__",
+      projectId: "__FIREBASE_PROJECT_ID__",
+      storageBucket: "__FIREBASE_STORAGE_BUCKET__",
+      messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
+      appId: "__FIREBASE_APP_ID__"
+    };
+
+    const statusEl = document.getElementById('status');
+    const retryBtn = document.getElementById('retry');
+
+    function showError(msg) {
+      statusEl.textContent = msg;
+      statusEl.className = 'err';
+      retryBtn.style.display = 'inline-block';
+    }
+
+    // Initialize Firebase once (outside doAuth so retries don't crash)
+    let auth = null;
+    if (FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('__')) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      auth = firebase.auth();
+    }
+
+    async function doAuth() {
+      if (!auth) {
+        showError('App not configured for sign-in.');
+        return;
+      }
+
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        const result = await auth.signInWithPopup(provider);
+        const credential = result.credential;
+
+        if (!credential || !credential.idToken) {
+          showError('Could not retrieve sign-in credentials. Please try again.');
+          return;
+        }
+
+        // Relay credential to PWA via service worker
+        const reg = await navigator.serviceWorker.ready;
+        if (!reg.active) {
+          showError('Service worker not available. Please reload the app and try again.');
+          return;
+        }
+
+        reg.active.postMessage({
+          type: 'AUTH_CREDENTIAL',
+          idToken: credential.idToken,
+          accessToken: credential.accessToken
+        });
+
+        // Clean up browser-side session (fire-and-forget — don't let
+        // a signOut failure mask the successful credential relay)
+        auth.signOut().catch(() => {});
+
+        statusEl.textContent = 'Sign-in complete! You can close this tab and return to the app.';
+        statusEl.className = 'ok';
+        retryBtn.style.display = 'none';
+
+        // Attempt to auto-close (works when opened via window.open)
+        window.close();
+      } catch (e) {
+        if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+          showError('Sign-in cancelled.');
+        } else {
+          showError('Sign-in failed: ' + e.message);
+        }
+      }
+    }
+
+    retryBtn.addEventListener('click', () => {
+      statusEl.textContent = 'Signing in with Google…';
+      statusEl.className = '';
+      retryBtn.style.display = 'none';
+      doAuth();
+    });
+
+    doAuth();
+  </script>
+</body>
+</html>

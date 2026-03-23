@@ -174,9 +174,10 @@ const Stats = (() => {
     const signInBtn = document.getElementById('btn-sync-signin');
     if (signInBtn) {
       signInBtn.addEventListener('click', async () => {
+        signInBtn.disabled = true;
+        signInBtn.textContent = 'Signing in…';
         try {
           const u = await Sync.signIn();
-          // signIn returns undefined for redirect flow (PWA) — page will redirect
           if (u) {
             UI.toast('Signed in and synced');
             Stats.render();
@@ -184,6 +185,8 @@ const Stats = (() => {
         } catch (e) {
           console.warn('Sign-in failed:', e);
           UI.toast('Sign-in failed');
+          signInBtn.disabled = false;
+          signInBtn.textContent = 'Sign In with Google';
         }
       });
     }

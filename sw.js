@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v56';
+const CACHE_NAME = 'hanzi-reader-v57';
 const ASSETS = [
   './',
   './index.html',
@@ -19,7 +19,8 @@ const ASSETS = [
   './js/sw-register.js',
   './data/char_data.js',
   './data/snippets.js',
-  './manifest.json'
+  './manifest.json',
+  './auth.html'
 ];
 
 self.addEventListener('install', e => {
@@ -51,4 +52,15 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
+});
+
+// Relay auth credentials from auth.html (browser) to PWA window
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'AUTH_CREDENTIAL') {
+    self.clients.matchAll({ type: 'window' }).then(clients => {
+      clients.forEach(c => {
+        if (!e.source || c.id !== e.source.id) c.postMessage(e.data);
+      });
+    });
+  }
 });

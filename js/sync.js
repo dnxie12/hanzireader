@@ -93,28 +93,36 @@ const Sync = (() => {
     loadSDK().then(() => {
       if (!auth) return;
       registerVisibilityListener();
-
-      // In PWA mode, handle redirect result before registering onAuthStateChanged
-      // to avoid a double-pull race (both would fire with the same user).
-      const redirectDone = isPWA()
-        ? auth.getRedirectResult().then(result => {
-            if (result && result.user) {
-              user = result.user;
-              Storage.updateSettings({ syncEnabled: true });
-              authChangeCallbacks.forEach(fn => fn(user));
-              return pull().then(() => UI.toast('Signed in and synced'));
-            }
-          }).catch(e => console.warn('Redirect result check failed:', e))
-        : Promise.resolve();
-
-      redirectDone.then(() => {
-        auth.onAuthStateChanged(u => {
-          user = u;
-          authChangeCallbacks.forEach(fn => fn(u));
-          if (u) pull().catch(e => console.warn('Sync pull on init failed:', e));
-        });
+      auth.onAuthStateChanged(u => {
+        user = u;
+        authChangeCallbacks.forEach(fn => fn(u));
+        if (u) pull().catch(e => console.warn('Sync pull on init failed:', e));
       });
     }).catch(e => console.warn('Firebase SDK load failed:', e));
+  }
+
+  // --- SW credential relay (PWA auth flow) ---
+  function waitForSWCredential(timeoutMs) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timeoutId = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        navigator.serviceWorker.removeEventListener('message', handler);
+        reject(new Error('Sign-in timed out. Please try again.'));
+      }, timeoutMs);
+
+      function handler(event) {
+        if (!event.data || event.data.type !== 'AUTH_CREDENTIAL') return;
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        navigator.serviceWorker.removeEventListener('message', handler);
+        resolve({ idToken: event.data.idToken, accessToken: event.data.accessToken });
+      }
+
+      navigator.serviceWorker.addEventListener('message', handler);
+    });
   }
 
   // --- Auth ---
@@ -122,17 +130,36 @@ const Sync = (() => {
     await loadSDK();
     if (!auth) throw new Error('Firebase not configured');
     registerVisibilityListener();
-    const provider = new firebase.auth.GoogleAuthProvider();
 
     if (isPWA()) {
-      // Redirect flow for PWA — popups don't work in standalone mode.
-      // syncEnabled is set in getRedirectResult handler after successful auth.
-      await auth.signInWithRedirect(provider);
-      // Page will redirect; result handled in init() via getRedirectResult()
-      return;
+      // Open auth.html in system browser; it completes OAuth and relays
+      // the Google credential back through the service worker.
+      if (!navigator.serviceWorker) {
+        throw new Error('Service worker not available. Please reload and try again.');
+      }
+      await navigator.serviceWorker.ready;
+
+      // Start listening before opening the window to avoid a race
+      const credentialPromise = waitForSWCredential(60000);
+
+      const win = window.open(new URL('auth.html', window.location.href).href);
+      if (!win) {
+        throw new Error('Could not open sign-in page. Please check your popup blocker settings.');
+      }
+
+      const { idToken, accessToken } = await credentialPromise;
+
+      const credential = firebase.auth.GoogleAuthProvider.credential(idToken, accessToken);
+      const result = await auth.signInWithCredential(credential);
+      user = result.user;
+      Storage.updateSettings({ syncEnabled: true });
+      authChangeCallbacks.forEach(fn => fn(user));
+      await pull();
+      return user;
     }
 
-    const result = await auth.signInWithPopup(provider);
+    // Normal browser flow — popup works fine
+    const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
     user = result.user;
     Storage.updateSettings({ syncEnabled: true });
     authChangeCallbacks.forEach(fn => fn(user));
