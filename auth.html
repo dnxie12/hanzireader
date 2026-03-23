@@ -35,103 +35,21 @@
       background: #3B82F6; color: #fff; font-size: 0.95rem; cursor: pointer; display: none;
     }
     #version { font-size: 11px; margin-top: 1.5rem; color: #475569; }
+    #cancel { display: none; margin-top: 1rem; font-size: 0.85rem; color: #94A3B8; text-decoration: none; }
+    #cancel:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Hanzi Reader</h1>
-    <div id="status">Loading…</div>
+    <div id="status">Signing in with Google…</div>
     <button id="retry">Try Again</button>
-    <div id="version">auth v3</div>
+    <a href="#" id="cancel">Cancel</a>
+    <div id="version">auth v6</div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script>
-    const FIREBASE_CONFIG = {
-      apiKey: "__FIREBASE_API_KEY__",
-      authDomain: "__FIREBASE_AUTH_DOMAIN__",
-      projectId: "__FIREBASE_PROJECT_ID__",
-      storageBucket: "__FIREBASE_STORAGE_BUCKET__",
-      messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-      appId: "__FIREBASE_APP_ID__"
-    };
-
-    const statusEl = document.getElementById('status');
-    const retryBtn = document.getElementById('retry');
-
-    function showError(msg) {
-      statusEl.textContent = msg;
-      statusEl.className = 'err';
-      retryBtn.style.display = 'inline-block';
-    }
-
-    function goHome() {
-      statusEl.textContent = 'Sign-in complete! Returning to app…';
-      statusEl.className = 'ok';
-      retryBtn.style.display = 'none';
-      window.location.href = new URL('index.html#stats', window.location.href).href;
-    }
-
-    // Initialize Firebase once (outside doAuth so retries don't crash)
-    let auth = null;
-    if (FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('__')) {
-      firebase.initializeApp(FIREBASE_CONFIG);
-      auth = firebase.auth();
-    }
-
-    async function doAuth() {
-      if (!auth) {
-        showError('App not configured for sign-in.');
-        return;
-      }
-
-      // 1. Check if returning from a redirect (second page load)
-      try {
-        statusEl.textContent = 'Checking sign-in status…';
-        const result = await auth.getRedirectResult();
-        if (result && result.user) {
-          goHome();
-          return;
-        }
-      } catch (e) {
-        console.warn('getRedirectResult error:', e.message);
-        // Not fatal — we'll try fresh sign-in below
-      }
-
-      // 2. Try signInWithPopup (works in normal browsers, may fail in PWA WebView)
-      try {
-        statusEl.textContent = 'Opening Google sign-in…';
-        const result = await Promise.race([
-          auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('popup_timeout')), 4000))
-        ]);
-        if (result && result.user) {
-          goHome();
-          return;
-        }
-      } catch (e) {
-        console.warn('Popup sign-in failed:', e.message);
-        // Fall through to redirect
-      }
-
-      // 3. Fallback: signInWithRedirect (navigates away, returns here after OAuth)
-      try {
-        statusEl.textContent = 'Redirecting to Google…';
-        await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
-      } catch (e) {
-        showError('Sign-in failed: ' + e.message);
-      }
-    }
-
-    retryBtn.addEventListener('click', () => {
-      statusEl.textContent = 'Signing in with Google…';
-      statusEl.className = '';
-      retryBtn.style.display = 'none';
-      doAuth();
-    });
-
-    doAuth();
-  </script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

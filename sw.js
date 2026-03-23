@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v63';
+const CACHE_NAME = 'hanzi-reader-v65';
 const ASSETS = [
   './',
   './index.html',
@@ -51,15 +51,4 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
-});
-
-// Relay auth credentials from auth.html (browser) to PWA window
-self.addEventListener('message', e => {
-  if (e.data && e.data.type === 'AUTH_CREDENTIAL') {
-    self.clients.matchAll({ type: 'window' }).then(clients => {
-      clients.forEach(c => {
-        if (!e.source || c.id !== e.source.id) c.postMessage(e.data);
-      });
-    });
-  }
 });
