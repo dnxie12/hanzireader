@@ -11,6 +11,8 @@ const FIREBASE_CONFIG = {
   appId: "__FIREBASE_APP_ID__"
 };
 
+let navigating = false;
+
 function showError(msg) {
   statusEl.textContent = msg;
   statusEl.className = 'err';
@@ -18,6 +20,8 @@ function showError(msg) {
 }
 
 function goHome() {
+  if (navigating) return;
+  navigating = true;
   statusEl.textContent = 'Sign-in complete! Returning to app…';
   statusEl.className = 'ok';
   retryBtn.style.display = 'none';
@@ -47,7 +51,13 @@ async function doAuth() {
 
   statusEl.textContent = 'Signing in with Google…';
 
-  // 1. Check if returning from a redirect
+  // Persistent listener — catches auth state restored from IndexedDB after
+  // redirect, even when getRedirectResult() fails (common in iOS WKWebView)
+  auth.onAuthStateChanged(user => {
+    if (user) goHome();
+  });
+
+  // Also try getRedirectResult explicitly (works in some environments)
   try {
     const result = await auth.getRedirectResult();
     if (result && result.user) {
@@ -58,7 +68,13 @@ async function doAuth() {
     console.warn('getRedirectResult error:', e.message);
   }
 
-  // 2. Try popup (works in browsers, may fail in PWA WebView)
+  // Already signed in? (onAuthStateChanged may have fired during getRedirectResult await)
+  if (auth.currentUser) {
+    goHome();
+    return;
+  }
+
+  // Try popup (works in browsers, may fail in PWA WebView)
   try {
     const popupPromise = auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
     popupPromise.catch(() => {}); // suppress unhandled rejection if timeout wins
@@ -74,7 +90,7 @@ async function doAuth() {
     console.warn('Popup failed:', e.message);
   }
 
-  // 3. Fallback to redirect
+  // Fallback to redirect
   try {
     await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
   } catch (e) {
@@ -86,6 +102,7 @@ retryBtn.addEventListener('click', () => {
   statusEl.textContent = 'Signing in with Google…';
   statusEl.className = '';
   retryBtn.style.display = 'none';
+  navigating = false;
   doAuth();
 });
 
