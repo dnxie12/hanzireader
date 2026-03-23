@@ -70,18 +70,26 @@
       auth = firebase.auth();
     }
 
-    async function relayCredential(credential) {
-      const reg = await navigator.serviceWorker.ready;
-      if (!reg.active) {
-        showError('Service worker not available. Please reload the app and try again.');
-        return;
-      }
-
-      reg.active.postMessage({
-        type: 'AUTH_CREDENTIAL',
+    function relayCredential(credential) {
+      // Store in cookie (shared between PWA and Safari on iOS)
+      const payload = btoa(JSON.stringify({
         idToken: credential.idToken,
         accessToken: credential.accessToken
-      });
+      }));
+      document.cookie = 'hanzi_auth=' + payload + '; max-age=300; path=/; secure; samesite=lax';
+
+      // Also try SW relay (works when auth.html is in a separate browser context)
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.ready.then(reg => {
+          if (reg.active) {
+            reg.active.postMessage({
+              type: 'AUTH_CREDENTIAL',
+              idToken: credential.idToken,
+              accessToken: credential.accessToken
+            });
+          }
+        }).catch(() => {});
+      }
 
       // Clean up browser-side session (fire-and-forget)
       auth.signOut().catch(() => {});

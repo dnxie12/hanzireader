@@ -101,27 +101,53 @@ const Sync = (() => {
     }).catch(e => console.warn('Firebase SDK load failed:', e));
   }
 
-  // --- SW credential relay (PWA auth flow) ---
-  function waitForSWCredential(timeoutMs) {
+  // --- Credential relay (PWA auth flow) ---
+  // Two channels: SW postMessage (cross-context) + cookie (shared on iOS)
+  function waitForCredential(timeoutMs) {
     return new Promise((resolve, reject) => {
       let settled = false;
-      const timeoutId = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        navigator.serviceWorker.removeEventListener('message', handler);
-        reject(new Error('Sign-in timed out. Please try again.'));
-      }, timeoutMs);
 
-      function handler(event) {
-        if (!event.data || event.data.type !== 'AUTH_CREDENTIAL') return;
+      function finish(cred) {
         if (settled) return;
         settled = true;
         clearTimeout(timeoutId);
-        navigator.serviceWorker.removeEventListener('message', handler);
-        resolve({ idToken: event.data.idToken, accessToken: event.data.accessToken });
+        clearInterval(pollId);
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.removeEventListener('message', handler);
+        }
+        // Delete the cookie
+        document.cookie = 'hanzi_auth=; max-age=0; path=/';
+        resolve(cred);
       }
 
-      navigator.serviceWorker.addEventListener('message', handler);
+      // Channel 1: SW message relay
+      function handler(event) {
+        if (!event.data || event.data.type !== 'AUTH_CREDENTIAL') return;
+        finish({ idToken: event.data.idToken, accessToken: event.data.accessToken });
+      }
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener('message', handler);
+      }
+
+      // Channel 2: Cookie polling (works when SW relay doesn't)
+      const pollId = setInterval(() => {
+        const match = document.cookie.match(/(?:^|;\s*)hanzi_auth=([^\s;]+)/);
+        if (!match) return;
+        try {
+          const cred = JSON.parse(atob(match[1]));
+          if (cred.idToken) finish(cred);
+        } catch (e) { /* malformed cookie, ignore */ }
+      }, 500);
+
+      const timeoutId = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        clearInterval(pollId);
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.removeEventListener('message', handler);
+        }
+        reject(new Error('Sign-in timed out. Please try again.'));
+      }, timeoutMs);
     });
   }
 
@@ -132,20 +158,16 @@ const Sync = (() => {
     registerVisibilityListener();
 
     if (isPWA()) {
-      // Open auth.html in system browser; it completes OAuth and relays
-      // the Google credential back through the service worker.
-      if (!navigator.serviceWorker) {
-        throw new Error('Service worker not available. Please reload and try again.');
+      // Open auth.html — completes OAuth and relays the credential back
+      // via service worker message and/or a shared cookie.
+      if (navigator.serviceWorker) {
+        await navigator.serviceWorker.ready;
       }
-      await navigator.serviceWorker.ready;
 
       // Start listening before opening the window to avoid a race
-      const credentialPromise = waitForSWCredential(60000);
+      const credentialPromise = waitForCredential(60000);
 
-      const win = window.open(new URL('auth.html', window.location.href).href);
-      if (!win) {
-        throw new Error('Could not open sign-in page. Please check your popup blocker settings.');
-      }
+      window.open(new URL('auth.html', window.location.href).href);
 
       const { idToken, accessToken } = await credentialPromise;
 
