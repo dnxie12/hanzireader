@@ -13,9 +13,10 @@ const FIREBASE_CONFIG = {
 
 let navigating = false;
 let unsubAuth = null;
+let authTimeout = null;
 
 // Detect if we're returning from a signInWithRedirect (survives cross-origin redirects)
-const isRedirectReturn = localStorage.getItem('auth_redirect_pending') === '1';
+let isRedirectReturn = localStorage.getItem('auth_redirect_pending') === '1';
 localStorage.removeItem('auth_redirect_pending');
 
 function showError(msg) {
@@ -52,23 +53,26 @@ try {
 // (doesn't bail on the initial null — Firebase may fire again with the
 // user after it finishes processing the redirect result).
 function waitForAuthState(timeoutMs) {
+  // Clean up any previous wait
+  if (authTimeout) { clearTimeout(authTimeout); authTimeout = null; }
+  if (unsubAuth) { unsubAuth(); unsubAuth = null; }
+
   return new Promise(resolve => {
     let settled = false;
-    const timeout = setTimeout(() => {
+    authTimeout = setTimeout(() => {
       settled = true;
       if (unsubAuth) { unsubAuth(); unsubAuth = null; }
+      authTimeout = null;
       resolve(false);
     }, timeoutMs);
-    if (unsubAuth) unsubAuth();
     unsubAuth = auth.onAuthStateChanged(user => {
       if (user && !settled) {
         settled = true;
-        clearTimeout(timeout);
+        if (authTimeout) { clearTimeout(authTimeout); authTimeout = null; }
         if (unsubAuth) { unsubAuth(); unsubAuth = null; }
         goHome();
         resolve(true);
       }
-      // null → keep waiting, don't resolve or unsubscribe
     });
   });
 }
@@ -145,6 +149,7 @@ retryBtn.addEventListener('click', () => {
   statusEl.className = '';
   retryBtn.style.display = 'none';
   navigating = false;
+  isRedirectReturn = false;
   doAuth();
 });
 
