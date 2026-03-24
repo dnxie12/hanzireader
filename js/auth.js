@@ -49,6 +49,7 @@ function startOAuth() {
     response_type: 'id_token',
     scope: 'openid email profile',
     state: state,
+    nonce: crypto.randomUUID(),
     prompt: 'select_account'
   });
 
