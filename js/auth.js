@@ -14,6 +14,10 @@ const FIREBASE_CONFIG = {
 let navigating = false;
 let unsubAuth = null;
 
+// Detect if we're returning from a signInWithRedirect (survives cross-origin redirects)
+const isRedirectReturn = localStorage.getItem('auth_redirect_pending') === '1';
+localStorage.removeItem('auth_redirect_pending');
+
 function showError(msg) {
   statusEl.textContent = msg;
   statusEl.className = 'err';
@@ -44,20 +48,27 @@ try {
   showError('Init error: ' + e.message);
 }
 
-// Wait for Firebase to restore auth state from IndexedDB.
-// Returns true if a user was found, false on timeout.
+// Wait for Firebase auth state. Stays subscribed for the full timeout
+// (doesn't bail on the initial null — Firebase may fire again with the
+// user after it finishes processing the redirect result).
 function waitForAuthState(timeoutMs) {
   return new Promise(resolve => {
-    const timeout = setTimeout(() => { resolve(false); }, timeoutMs);
+    let settled = false;
+    const timeout = setTimeout(() => {
+      settled = true;
+      if (unsubAuth) { unsubAuth(); unsubAuth = null; }
+      resolve(false);
+    }, timeoutMs);
     if (unsubAuth) unsubAuth();
     unsubAuth = auth.onAuthStateChanged(user => {
-      clearTimeout(timeout);
-      if (user) {
+      if (user && !settled) {
+        settled = true;
+        clearTimeout(timeout);
+        if (unsubAuth) { unsubAuth(); unsubAuth = null; }
         goHome();
         resolve(true);
-      } else {
-        resolve(false);
       }
+      // null → keep waiting, don't resolve or unsubscribe
     });
   });
 }
@@ -70,7 +81,11 @@ async function doAuth() {
 
   statusEl.textContent = 'Signing in with Google…';
 
-  // 1. Try getRedirectResult (works when session storage survives the redirect)
+  // Start listening for auth state immediately (catches changes during getRedirectResult)
+  const waitTime = isRedirectReturn ? 8000 : 3000;
+  const authPromise = waitForAuthState(waitTime);
+
+  // Try getRedirectResult in parallel with the listener
   try {
     const result = await auth.getRedirectResult();
     if (navigating) return;
@@ -82,19 +97,25 @@ async function doAuth() {
     console.warn('getRedirectResult error:', e.message);
   }
 
-  // 2. Wait for auth state from IndexedDB (catches redirect sign-in when
-  //    getRedirectResult fails, which is common in iOS WKWebView)
   if (auth.currentUser) {
     goHome();
     return;
   }
-  const restored = await waitForAuthState(3000);
+
+  // Wait for the listener (already been running since before getRedirectResult)
+  const restored = await authPromise;
   if (restored || navigating) return;
 
-  // 3. Try popup (works in browsers, may fail in PWA WebView)
+  // On redirect return, don't start another redirect — show error instead
+  if (isRedirectReturn) {
+    showError('Sign-in did not complete. Please try again.');
+    return;
+  }
+
+  // Try popup (works in browsers, may fail in PWA WebView)
   try {
     const popupPromise = auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-    popupPromise.catch(() => {}); // suppress unhandled rejection if timeout wins
+    popupPromise.catch(() => {});
     const result = await Promise.race([
       popupPromise,
       new Promise((_, reject) => setTimeout(() => reject(new Error('popup_timeout')), 4000))
@@ -108,11 +129,13 @@ async function doAuth() {
     console.warn('Popup failed:', e.message);
   }
 
-  // 4. Fallback to redirect
+  // Fallback to redirect — set flag so we know we're returning
   if (navigating) return;
   try {
+    localStorage.setItem('auth_redirect_pending', '1');
     await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
   } catch (e) {
+    localStorage.removeItem('auth_redirect_pending');
     showError('Sign-in failed. Please try again.');
   }
 }
@@ -130,7 +153,6 @@ cancelLink.addEventListener('click', (e) => {
   window.location.href = new URL('index.html#stats', window.location.href).href;
 });
 
-// Show cancel link after a short delay
 setTimeout(() => { cancelLink.style.display = 'inline'; }, 2000);
 
 if (auth) doAuth();
