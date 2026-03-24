@@ -85,28 +85,22 @@ async function doAuth() {
 
   statusEl.textContent = 'Signing in with Google…';
 
-  // Start listening for auth state immediately (catches changes during getRedirectResult)
+  // Start listening for auth state immediately
   const waitTime = isRedirectReturn ? 8000 : 3000;
   const authPromise = waitForAuthState(waitTime);
 
-  // Try getRedirectResult in parallel with the listener
-  try {
-    const result = await auth.getRedirectResult();
-    if (navigating) return;
-    if (result && result.user) {
-      goHome();
-      return;
-    }
-  } catch (e) {
-    console.warn('getRedirectResult error:', e.message);
-  }
+  // Fire getRedirectResult in the background — don't await it because it
+  // hangs indefinitely in iOS WKWebView. If it succeeds, goHome() is called.
+  auth.getRedirectResult().then(result => {
+    if (result && result.user) goHome();
+  }).catch(e => console.warn('getRedirectResult error:', e.message));
 
   if (auth.currentUser) {
     goHome();
     return;
   }
 
-  // Wait for the listener (already been running since before getRedirectResult)
+  // Wait for onAuthStateChanged or timeout
   const restored = await authPromise;
   if (restored || navigating) return;
 
