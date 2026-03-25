@@ -11,6 +11,7 @@ const App = (() => {
 
     // Show placement test on first launch
     if (Placement.shouldShow()) {
+      document.documentElement.classList.remove('not-ready');
       Placement.start();
       return;
     }
@@ -21,12 +22,16 @@ const App = (() => {
     // Navigate to hash or default to home
     const hash = window.location.hash.slice(1) || 'home';
     navigate(screens.includes(hash) ? hash : 'home');
+
+    // Reveal UI (hidden by .not-ready to prevent FOUC)
+    document.documentElement.classList.remove('not-ready');
   }
 
   function finishInit() {
     setupRouting();
     setupTabs();
     navigate('home');
+    document.documentElement.classList.remove('not-ready');
   }
 
   function setupRouting() {
