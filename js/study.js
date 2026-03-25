@@ -10,8 +10,15 @@ const Study = (() => {
   let newCardPhase = ''; // 'present', 'quiz', 'mini-review'
   let quizOptions = [];
   let miniReviewQueue = []; // new chars to mini-review after a few cards
+  let rendered = false;
+  let currentView = 'card'; // 'card' | 'empty' | 'summary'
 
   function render() {
+    // Preserve state on tab return — skip full rebuild
+    if (rendered) {
+      return;
+    }
+
     const el = document.getElementById('screen-study');
     buildSession();
     Sync.lock();
@@ -28,12 +35,20 @@ const Study = (() => {
         </div>
       `;
       Sync.unlock();
-      document.getElementById('btn-back-home').addEventListener('click', () => App.navigate('home'));
+      rendered = true;
+      currentView = 'empty';
+      document.getElementById('btn-back-home').addEventListener('click', () => {
+        rendered = false;
+        App.navigate('home');
+      });
       if (hasMoreNew) {
         document.getElementById('btn-learn-more').addEventListener('click', () => {
           newQueue = Data.getNextNewChars(10);
           currentIndex = 0;
           sessionStats = { reviews: 0, correct: 0, newLearned: 0, startTime: Date.now() };
+          Sync.lock();
+          rendered = true;
+          currentView = 'card';
           showCard();
         });
       }
@@ -42,6 +57,8 @@ const Study = (() => {
 
     sessionStats = { reviews: 0, correct: 0, newLearned: 0, startTime: Date.now() };
     currentIndex = 0;
+    rendered = true;
+    currentView = 'card';
     showCard();
   }
 
@@ -326,6 +343,7 @@ const Study = (() => {
 
   // --- Session Summary ---
   function showSummary() {
+    currentView = 'summary';
     const el = document.getElementById('screen-study');
     const duration = Math.round((Date.now() - sessionStats.startTime) / 1000);
     const minutes = Math.floor(duration / 60);
@@ -360,7 +378,10 @@ const Study = (() => {
         <button class="btn-primary" id="study-done-btn" style="margin-top:24px;">Done</button>
       </div>
     `;
-    document.getElementById('study-done-btn').addEventListener('click', () => App.navigate('home'));
+    document.getElementById('study-done-btn').addEventListener('click', () => {
+      rendered = false;
+      App.navigate('home');
+    });
   }
 
   return { render };

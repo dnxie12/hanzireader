@@ -13,6 +13,8 @@ const Read = (() => {
   let cachedRecentlyRead = null;
   let cachedProfile = null;
   let touchStartY = 0;
+  let rendered = false;
+  let currentView = 'list'; // 'list' | 'passage' | 'summary'
 
   // --- User Profile (computed once per session) ---
   function buildUserProfile() {
@@ -231,7 +233,7 @@ const Read = (() => {
     return { text: 'Start Session (No Passages Unlocked)', disabled: true };
   }
 
-  function renderSnippetList(filterDiff) {
+  function renderSnippetList(filterDiff, preserveScroll) {
     currentDiffFilter = filterDiff;
     const container = document.getElementById('read-snippet-list');
     if (!container || !cachedGroups || !cachedRecentlyRead) return;
@@ -275,13 +277,44 @@ const Read = (() => {
       startBtn.classList.toggle('disabled', btn.disabled);
     }
 
-    // Scroll to top of list
-    el.scrollTop = 0;
-    window.scrollTo(0, 0);
+    // Scroll to top unless preserving position on tab return
+    if (!preserveScroll) {
+      el.scrollTop = 0;
+      window.scrollTo(0, 0);
+    }
+  }
+
+  // --- Lightweight refresh for tab-return on list view ---
+  function refreshSnippetList() {
+    const profile = buildUserProfile();
+    cachedProfile = profile;
+    cachedRecentlyRead = Storage.getReadHistory();
+    const allSnippets = (window.SNIPPET_DATA || []).map(s => {
+      const cov = analyzeSnippetCoverage(s, profile);
+      return { ...s, pctKnown: Math.round(cov.coverageRatio * 100) };
+    });
+    const groups = { 1: [], 2: [], 3: [], 4: [] };
+    for (const s of allSnippets) {
+      groups[s.staticDiff] = groups[s.staticDiff] || [];
+      groups[s.staticDiff].push(s);
+    }
+    for (const diff of [1, 2, 3, 4]) {
+      if (groups[diff]) groups[diff].sort((a, b) => b.pctKnown - a.pctKnown);
+    }
+    cachedGroups = groups;
+    renderSnippetList(currentDiffFilter, true);
   }
 
   // --- Render snippet list ---
   function render() {
+    // Preserve state on tab return — skip full rebuild
+    if (rendered) {
+      if (currentView === 'list') {
+        refreshSnippetList();
+      }
+      return;
+    }
+
     // Clean up any leftover document listener from reading view
     document.removeEventListener('click', handleOutsideClick);
     currentSnippet = null;
@@ -310,17 +343,30 @@ const Read = (() => {
           <button class="btn-primary" id="go-study-btn" style="max-width:280px;">Go Study</button>
         </div>
       `;
-      document.getElementById('go-study-btn').addEventListener('click', () => App.navigate('study'));
+      rendered = true;
+      document.getElementById('go-study-btn').addEventListener('click', () => {
+        rendered = false;
+        App.navigate('study');
+      });
       return;
     }
 
+    buildListView(el);
+    rendered = true;
+    currentView = 'list';
+  }
+
+  // --- Shared list DOM builder (used by render + showSnippetList) ---
+  function buildListView(el) {
+    const profile = buildUserProfile();
+    cachedProfile = profile;
     cachedRecentlyRead = Storage.getReadHistory();
+
     const allSnippets = (window.SNIPPET_DATA || []).map(s => {
       const cov = analyzeSnippetCoverage(s, profile);
       return { ...s, pctKnown: Math.round(cov.coverageRatio * 100) };
     });
 
-    // Group by difficulty and sort each group
     const groups = { 1: [], 2: [], 3: [], 4: [] };
     for (const s of allSnippets) {
       groups[s.staticDiff] = groups[s.staticDiff] || [];
@@ -331,69 +377,82 @@ const Read = (() => {
     }
     cachedGroups = groups;
 
-    // Count unlocked snippets per difficulty
     const unlockedCounts = {};
     for (const diff of [1, 2, 3, 4]) {
       unlockedCounts[diff] = (groups[diff] || []).filter(s => s.pctKnown >= 60).length;
     }
     const totalUnlocked = Object.values(unlockedCounts).reduce((a, b) => a + b, 0);
 
-    // Build nav chips
     const totalSnippets = allSnippets.length;
-    let chipHtml = `<button class="filter-chip active" data-diff="all">All (${totalUnlocked}/${totalSnippets})</button>`;
+    let chipHtml = `<button class="filter-chip${currentDiffFilter === 'all' ? ' active' : ''}" data-diff="all">All (${totalUnlocked}/${totalSnippets})</button>`;
     for (const diff of [1, 2, 3, 4]) {
       if (!groups[diff] || groups[diff].length === 0) continue;
-      chipHtml += `<button class="filter-chip" data-diff="${diff}">${GROUP_LABELS[diff]} (${unlockedCounts[diff]}/${groups[diff].length})</button>`;
+      chipHtml += `<button class="filter-chip${String(currentDiffFilter) === String(diff) ? ' active' : ''}" data-diff="${diff}">${GROUP_LABELS[diff]} (${unlockedCounts[diff]}/${groups[diff].length})</button>`;
     }
 
-    const btn = getSessionButtonHTML(profile);
+    const btn = getSessionButtonHTML(cachedProfile, currentDiffFilter);
 
     let html = `<div class="read-sticky-nav">
       <div class="read-header">
         <h2>Reading Practice</h2>
         <div class="read-toggle" id="read-toggle-wrap">
           <span class="read-toggle-label" id="hide-read-label">Hide read</span>
-          <button class="read-toggle-switch" id="read-hide-read-btn" role="switch" aria-checked="false" aria-labelledby="hide-read-label"></button>
+          <button class="read-toggle-switch" id="read-hide-read-btn" role="switch" aria-checked="${hideReadSnippets}" aria-labelledby="hide-read-label"></button>
         </div>
       </div>
       <div class="read-difficulty-nav">${chipHtml}</div>
     </div>`;
 
-    // Start session button (always present, disabled when no passages)
     html += `<button class="btn-primary${btn.disabled ? ' disabled' : ''}" id="read-start-btn">${btn.text}</button>`;
-
-    html += `<div id="read-snippet-list">${buildSnippetListHTML(groups, cachedRecentlyRead, 'all', false)}</div>`;
+    html += `<div id="read-snippet-list">${buildSnippetListHTML(groups, cachedRecentlyRead, currentDiffFilter, hideReadSnippets)}</div>`;
 
     el.innerHTML = html;
 
-    // Chip click listeners
     el.querySelectorAll('.read-difficulty-nav .filter-chip').forEach(chip => {
       chip.addEventListener('click', () => renderSnippetList(chip.dataset.diff));
     });
 
-    // Hide-read toggle (whole wrapper is tappable)
     document.getElementById('read-toggle-wrap').addEventListener('click', () => {
       hideReadSnippets = !hideReadSnippets;
       document.getElementById('read-hide-read-btn').setAttribute('aria-checked', hideReadSnippets);
       renderSnippetList(currentDiffFilter);
     });
 
-    // Start session button
     const startBtn = document.getElementById('read-start-btn');
     startBtn.addEventListener('click', () => {
-      sessionSnippets = selectSessionSnippets(profile, 5, currentDiffFilter);
+      sessionSnippets = selectSessionSnippets(cachedProfile, 5, currentDiffFilter);
       sessionIndex = 0;
       sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
       if (sessionSnippets.length > 0) openSnippet(sessionSnippets[0]);
     });
 
-    // Individual snippet tap
     attachSnippetListeners(el);
+  }
+
+  // --- Return to snippet list (from Back/Done buttons) ---
+  function showSnippetList() {
+    document.removeEventListener('click', handleOutsideClick);
+    currentSnippet = null;
+    currentView = 'list';
+    Sync.unlock();
+
+    const el = document.getElementById('screen-read');
+    const profile = buildUserProfile();
+    const knownCount = profile.known.size + profile.fragile.size + profile.learning.size;
+
+    if (knownCount < 20 || !window.SNIPPET_DATA || window.SNIPPET_DATA.length === 0) {
+      rendered = false;
+      render();
+      return;
+    }
+
+    buildListView(el);
   }
 
   // --- Reading View ---
   function openSnippet(snippet) {
     currentSnippet = snippet;
+    currentView = 'passage';
     flaggedChars = new Set();
     lookedUpChars = new Set();
     Sync.lock();
@@ -435,8 +494,7 @@ const Read = (() => {
 
     // Event: back button
     el.querySelector('.read-back-btn').addEventListener('click', () => {
-      Sync.unlock();
-      render();
+      showSnippetList();
     });
 
     // Event: next/done button
@@ -461,8 +519,7 @@ const Read = (() => {
         if (sessionSnippets.length > 1) {
           showSummary();
         } else {
-          Sync.unlock();
-          render();
+          showSnippetList();
         }
       });
     }
@@ -575,6 +632,7 @@ const Read = (() => {
 
   // --- Session Summary ---
   function showSummary() {
+    currentView = 'summary';
     // Clean up event listener
     document.removeEventListener('click', handleOutsideClick);
     Sync.unlock();
@@ -611,6 +669,7 @@ const Read = (() => {
     `;
 
     document.getElementById('read-done-final').addEventListener('click', () => {
+      rendered = false;
       App.navigate('home');
     });
   }

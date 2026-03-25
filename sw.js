@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v74';
+const CACHE_NAME = 'hanzi-reader-v75';
 const ASSETS = [
   './',
   './index.html',
