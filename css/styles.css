@@ -474,20 +474,23 @@ body {
   font-size: 20px;
   font-weight: 600;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .compound-pinyin {
   font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .compound-def {
   font-size: 14px;
   color: var(--text-muted);
-  margin-left: auto;
   text-align: right;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
   min-width: 0;
 }
 
