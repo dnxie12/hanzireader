@@ -467,7 +467,7 @@ body {
   align-items: baseline;
   gap: 12px;
   font-size: 16px;
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .compound-char {
@@ -484,8 +484,20 @@ body {
   font-size: 14px;
   color: var(--text-muted);
   margin-left: auto;
-  white-space: normal;
   text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.compound-see-more {
+  font-size: 13px;
+  color: var(--accent);
+  cursor: pointer;
+  text-align: center;
+  padding: 12px 0;
+  margin-top: 2px;
 }
 
 .rating-buttons {
@@ -859,6 +871,7 @@ body {
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
 }
 
 .modal-compound:last-child {
@@ -879,6 +892,9 @@ body {
   font-size: 14px;
   color: var(--text-muted);
   margin-left: auto;
+  overflow-wrap: break-word;
+  min-width: 0;
+  flex: 1 1 100%;
 }
 
 .etymology-text {

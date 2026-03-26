@@ -141,6 +141,7 @@ const Study = (() => {
             </div>
           `).join('')}
         </div>
+        <div class="compound-see-more">Details &#x203A;</div>
         ` : ''}
         <p class="hint" style="margin-top:16px;">Tap to continue</p>
       </div>
@@ -152,6 +153,14 @@ const Study = (() => {
       newCardPhase = 'quiz';
       showNewCardQuiz(el, char, info);
     });
+
+    const seeMoreBtn = el.querySelector('.compound-see-more');
+    if (seeMoreBtn) {
+      seeMoreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        UI.showCharModal(char);
+      });
+    }
   }
 
   function showNewCardQuiz(el, char, info) {
@@ -285,11 +294,20 @@ const Study = (() => {
             <span class="compound-def">${UI.esc(def)}</span>
           </div>
         `).join('')}
-      </div>`;
+      </div>
+      <div class="compound-see-more">Details &#x203A;</div>`;
     }
 
     content.innerHTML = html;
     if (typeof Audio_ !== 'undefined') Audio_.attachButtons(content);
+
+    const seeMoreBtn = content.querySelector('.compound-see-more');
+    if (seeMoreBtn) {
+      seeMoreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        UI.showCharModal(char);
+      });
+    }
 
     if (revealStage >= 3) {
       hint.style.display = 'none';
