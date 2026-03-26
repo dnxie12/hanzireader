@@ -132,7 +132,7 @@ const Study = (() => {
         </div>
         <div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>
         ${info.cw && info.cw.length > 0 ? `
-        <div class="compound-list" style="margin-top:12px;">
+        <div class="compound-list" style="margin-top:20px;">
           ${info.cw.slice(0, 4).map(([chars, py, def]) => `
             <div class="compound-item">
               <span class="compound-char">${UI.esc(chars)}</span>
@@ -286,7 +286,7 @@ const Study = (() => {
       html += `<div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>`;
     }
     if (revealStage >= 3 && info.cw && info.cw.length > 0) {
-      html += `<div class="compound-list" style="margin-top:12px;">
+      html += `<div class="compound-list" style="margin-top:20px;">
         ${info.cw.slice(0, 4).map(([chars, py, def]) => `
           <div class="compound-item">
             <span class="compound-char">${UI.esc(chars)}</span>
