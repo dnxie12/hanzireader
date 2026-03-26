@@ -6,6 +6,7 @@ const App = (() => {
 
   function init() {
     SRS.init();
+    if (typeof Audio_ !== 'undefined') Audio_.init();
     applyTheme(Storage.getSettings().theme);
     Sync.init();
 

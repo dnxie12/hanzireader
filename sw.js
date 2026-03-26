@@ -1,4 +1,5 @@
-const CACHE_NAME = 'hanzi-reader-v75';
+const CACHE_NAME = 'hanzi-reader-v76';
+const AUDIO_CACHE = 'hanzi-audio-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +8,7 @@ const ASSETS = [
   './js/storage.js',
   './js/data.js',
   './js/ui.js',
+  './js/audio.js',
   './js/vendor/fsrs.umd.js',
   './js/srs.js',
   './js/sync.js',
@@ -34,7 +36,10 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys
+        .filter(k => k !== CACHE_NAME && k !== AUDIO_CACHE)
+        .map(k => caches.delete(k))
+      )
     ).then(() => self.clients.claim())
   );
 });
@@ -49,6 +54,22 @@ self.addEventListener('fetch', e => {
     url.hostname.endsWith('.firebaseapp.com')) {
     return;
   }
+  // Runtime-cache audio files in a persistent cache (survives app updates)
+  if (url.pathname.match(/\/audio\/.*\.mp3$/)) {
+    e.respondWith(
+      caches.open(AUDIO_CACHE).then(cache =>
+        cache.match(e.request).then(cached => {
+          if (cached) return cached;
+          return fetch(e.request).then(resp => {
+            if (resp.ok) cache.put(e.request, resp.clone());
+            return resp;
+          });
+        })
+      )
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );

@@ -813,6 +813,13 @@ body {
   flex-shrink: 0;
 }
 
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .modal-section {
   margin-bottom: 20px;
 }
@@ -1331,9 +1338,63 @@ body {
   margin-bottom: 10px;
 }
 
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.tooltip-header .tooltip-char {
+  margin-bottom: 0;
+}
+
+.tooltip-header .tooltip-pinyin {
+  margin-bottom: 0;
+}
+
 .tooltip-actions {
   display: flex;
   gap: 8px;
+}
+
+/* --- Audio Button --- */
+.audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.audio-btn:hover {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.audio-btn:active {
+  transform: scale(0.92);
+}
+
+.tooltip-audio-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.study-pinyin-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
 }
 
 /* --- Placement Test --- */

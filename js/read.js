@@ -571,8 +571,11 @@ const Read = (() => {
     const alreadyFlagged = flaggedChars.has(char);
 
     tip.innerHTML = `
-      <div class="tooltip-char">${UI.esc(char)}</div>
-      <div class="tooltip-pinyin tone-${UI.getTone(info.p)}">${UI.esc(info.p)}</div>
+      <div class="tooltip-header">
+        <div class="tooltip-char">${UI.esc(char)}</div>
+        <div class="tooltip-pinyin tone-${UI.getTone(info.p)}">${UI.esc(info.p)}</div>
+        ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char, { className: 'audio-btn tooltip-audio-btn', size: 18 }) : ''}
+      </div>
       <div class="tooltip-def">${UI.esc(info.d)}</div>
       <div class="tooltip-actions">
         <button class="btn-secondary tooltip-flag-btn" style="font-size:13px;padding:6px 12px;">
@@ -593,6 +596,9 @@ const Read = (() => {
     tip.style.top = top + 'px';
     tip.style.left = left + 'px';
     tip.classList.add('active');
+
+    // Audio
+    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(tip);
 
     // Flag button
     tip.querySelector('.tooltip-flag-btn').addEventListener('click', (e) => {
