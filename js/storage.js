@@ -16,6 +16,7 @@ const Storage = (() => {
       theme: 'system',
       placementDone: false,
       currentIndex: 0,
+      audioEnabled: true,
       syncEnabled: false,
       lastSyncTime: null,
       settingsModified: null

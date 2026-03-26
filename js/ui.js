@@ -89,7 +89,10 @@ const UI = (() => {
             <p>${esc(info.d)}</p>
           </div>
         </div>
-        <button class="modal-close" aria-label="Close">&times;</button>
+        <div class="modal-header-actions">
+          ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char, { className: 'audio-btn modal-audio-btn' }) : ''}
+          <button class="modal-close" aria-label="Close">&times;</button>
+        </div>
       </div>
 
       <div class="modal-section">
@@ -128,6 +131,9 @@ const UI = (() => {
     `;
 
     modal.classList.add('active');
+
+    // Attach audio button handler
+    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(content);
 
     const close = content.querySelector('.modal-close');
     close.addEventListener('click', () => modal.classList.remove('active'));

@@ -126,7 +126,10 @@ const Study = (() => {
       </div>
       <div class="study-card" id="study-card">
         <div class="char-large">${UI.esc(char)}</div>
-        <div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</div>
+        <div class="study-pinyin-row">
+          <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</span>
+          ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+        </div>
         <div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>
         ${info.cw && info.cw.length > 0 ? `
         <div class="compound-list" style="margin-top:12px;">
@@ -142,6 +145,8 @@ const Study = (() => {
         <p class="hint" style="margin-top:16px;">Tap to continue</p>
       </div>
     `;
+
+    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(el);
 
     document.getElementById('study-card').addEventListener('click', () => {
       newCardPhase = 'quiz';
@@ -170,7 +175,10 @@ const Study = (() => {
       </div>
       <div class="study-card" style="cursor:default;">
         <p style="font-size:14px; color:var(--text-muted);">Which character is</p>
-        <div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:32px; font-weight:700;">${UI.esc(info.p)}</div>
+        <div class="study-pinyin-row">
+          <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:32px; font-weight:700;">${UI.esc(info.p)}</span>
+          ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+        </div>
         <div class="definition">${UI.esc(info.d)}</div>
       </div>
       <div class="rating-buttons" style="margin-top:12px;">
@@ -182,6 +190,8 @@ const Study = (() => {
         `).join('')}
       </div>
     `;
+
+    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(el);
 
     el.querySelectorAll('.rating-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -258,7 +268,10 @@ const Study = (() => {
     let html = '';
 
     if (revealStage >= 1) {
-      html += `<div class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</div>`;
+      html += `<div class="study-pinyin-row">
+        <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</span>
+        ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+      </div>`;
     }
     if (revealStage >= 2) {
       html += `<div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>`;
@@ -276,6 +289,7 @@ const Study = (() => {
     }
 
     content.innerHTML = html;
+    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(content);
 
     if (revealStage >= 3) {
       hint.style.display = 'none';

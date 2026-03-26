@@ -109,6 +109,12 @@ const Stats = (() => {
             </div>
           </div>
           <div class="settings-row">
+            <label>Audio</label>
+            <div class="read-toggle" id="audio-toggle-wrap">
+              <button class="read-toggle-switch" id="setting-audio" role="switch" aria-checked="${settings.audioEnabled !== false}" aria-label="Audio"></button>
+            </div>
+          </div>
+          <div class="settings-row">
             <label>Theme</label>
             <select id="setting-theme" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-secondary); color:var(--text-primary);">
               <option value="system" ${settings.theme === 'system' ? 'selected' : ''}>System</option>
@@ -163,6 +169,13 @@ const Stats = (() => {
       const val = parseInt(e.target.value);
       document.getElementById('new-per-day-val').textContent = val;
       Storage.updateSettings({ newPerDay: val });
+    });
+
+    document.getElementById('audio-toggle-wrap').addEventListener('click', () => {
+      const btn = document.getElementById('setting-audio');
+      const isOn = btn.getAttribute('aria-checked') === 'true';
+      btn.setAttribute('aria-checked', !isOn);
+      if (typeof Audio_ !== 'undefined') Audio_.setEnabled(!isOn);
     });
 
     document.getElementById('setting-theme').addEventListener('change', (e) => {
