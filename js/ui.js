@@ -163,8 +163,20 @@ const UI = (() => {
     el._timer = setTimeout(() => { el.style.opacity = '0'; }, duration);
   }
 
+  function truncDef(def, maxLen = 18) {
+    if (!def || def.length <= maxLen) return def;
+    if (def.charAt(0) === '(' && def.indexOf(') ') !== -1) {
+      def = def.slice(def.indexOf(') ') + 2);
+      if (def.length <= maxLen) return def;
+    }
+    const truncated = def.slice(0, maxLen);
+    const lastSpace = truncated.lastIndexOf(' ');
+    if (lastSpace > maxLen - 6) return truncated.slice(0, lastSpace) + '\u2026';
+    return truncated + '\u2026';
+  }
+
   return {
     esc, getTone, renderPinyin, renderCompoundPinyin, renderCompounds,
-    showCharModal, toast
+    showCharModal, toast, truncDef
   };
 })();

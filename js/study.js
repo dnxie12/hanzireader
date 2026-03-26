@@ -137,7 +137,7 @@ const Study = (() => {
             <div class="compound-item">
               <span class="compound-char">${UI.esc(chars)}</span>
               <span class="compound-pinyin tone-${UI.getTone(py)}">${UI.esc(py)}</span>
-              <span class="compound-def">${UI.esc(def)}</span>
+              <span class="compound-def">${UI.esc(UI.truncDef(def))}</span>
             </div>
           `).join('')}
         </div>
@@ -291,7 +291,7 @@ const Study = (() => {
           <div class="compound-item">
             <span class="compound-char">${UI.esc(chars)}</span>
             <span class="compound-pinyin tone-${UI.getTone(py)}">${UI.esc(py)}</span>
-            <span class="compound-def">${UI.esc(def)}</span>
+            <span class="compound-def">${UI.esc(UI.truncDef(def))}</span>
           </div>
         `).join('')}
       </div>
