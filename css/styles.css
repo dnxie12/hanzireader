@@ -428,6 +428,19 @@ body {
   transition: width 0.3s;
 }
 
+#screen-study {
+  transition: opacity 60ms ease-out;
+}
+
+#screen-study.card-exit {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #screen-study { transition: none; }
+  #screen-study.card-exit { opacity: 1; }
+}
+
 .study-card {
   width: 100%;
   min-height: 280px;
