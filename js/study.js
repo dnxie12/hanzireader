@@ -13,6 +13,31 @@ const Study = (() => {
   let rendered = false;
   let currentView = 'card'; // 'card' | 'empty' | 'summary'
 
+  let swapPending = false;
+  function swapContent(el, buildFn) {
+    if (!el.querySelector('.study-card') && !el.querySelector('.summary-container')) {
+      buildFn();
+      return;
+    }
+    if (swapPending) {
+      buildFn();
+      el.classList.remove('card-exit');
+      return;
+    }
+    swapPending = true;
+    el.classList.add('card-exit');
+    setTimeout(() => { // 60 — must match CSS transition duration on #screen-study
+      try {
+        buildFn();
+      } finally {
+        swapPending = false;
+        requestAnimationFrame(() => {
+          el.classList.remove('card-exit');
+        });
+      }
+    }, 60);
+  }
+
   function render() {
     // Preserve state on tab return — skip full rebuild
     if (rendered) {
@@ -118,49 +143,51 @@ const Study = (() => {
   function showNewCardPresent(el, char, info) {
     const progress = Math.round(((currentIndex) / totalCards()) * 100);
 
-    el.innerHTML = `
-      <div class="study-progress">
-        <span>${currentIndex + 1} / ${totalCards()}</span>
-        <div class="study-progress-bar"><div class="study-progress-fill" style="width:${progress}%"></div></div>
-        <span class="meta-tag" style="font-size:11px;">NEW</span>
-      </div>
-      <div class="study-card" id="study-card">
-        <div class="char-large">${UI.esc(char)}</div>
-        <div class="study-pinyin-row">
-          <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</span>
-          ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+    swapContent(el, () => {
+      el.innerHTML = `
+        <div class="study-progress">
+          <span>${currentIndex + 1} / ${totalCards()}</span>
+          <div class="study-progress-bar"><div class="study-progress-fill" style="width:${progress}%"></div></div>
+          <span class="meta-tag" style="font-size:11px;">NEW</span>
         </div>
-        <div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>
-        ${info.cw && info.cw.length > 0 ? `
-        <div class="compound-list" style="margin-top:20px;">
-          ${info.cw.slice(0, 4).map(([chars, py, def]) => `
-            <div class="compound-item">
-              <span class="compound-char">${UI.esc(chars)}</span>
-              <span class="compound-pinyin tone-${UI.getTone(py)}">${UI.esc(py)}</span>
-              <span class="compound-def">${UI.esc(UI.truncDef(def))}</span>
-            </div>
-          `).join('')}
+        <div class="study-card" id="study-card">
+          <div class="char-large">${UI.esc(char)}</div>
+          <div class="study-pinyin-row">
+            <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:28px;">${UI.esc(info.p)}</span>
+            ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+          </div>
+          <div class="definition" style="margin-top:4px;">${UI.esc(info.d)}</div>
+          ${info.cw && info.cw.length > 0 ? `
+          <div class="compound-list" style="margin-top:20px;">
+            ${info.cw.slice(0, 4).map(([chars, py, def]) => `
+              <div class="compound-item">
+                <span class="compound-char">${UI.esc(chars)}</span>
+                <span class="compound-pinyin tone-${UI.getTone(py)}">${UI.esc(py)}</span>
+                <span class="compound-def">${UI.esc(UI.truncDef(def))}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="compound-see-more">Details &#x203A;</div>
+          ` : ''}
+          <p class="hint" style="margin-top:16px;">Tap to continue</p>
         </div>
-        <div class="compound-see-more">Details &#x203A;</div>
-        ` : ''}
-        <p class="hint" style="margin-top:16px;">Tap to continue</p>
-      </div>
-    `;
+      `;
 
-    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(el);
+      if (typeof Audio_ !== 'undefined') Audio_.attachButtons(el);
 
-    document.getElementById('study-card').addEventListener('click', () => {
-      newCardPhase = 'quiz';
-      showNewCardQuiz(el, char, info);
-    });
-
-    const seeMoreBtn = el.querySelector('.compound-see-more');
-    if (seeMoreBtn) {
-      seeMoreBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        UI.showCharModal(char);
+      document.getElementById('study-card').addEventListener('click', () => {
+        newCardPhase = 'quiz';
+        showNewCardQuiz(el, char, info);
       });
-    }
+
+      const seeMoreBtn = el.querySelector('.compound-see-more');
+      if (seeMoreBtn) {
+        seeMoreBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          UI.showCharModal(char);
+        });
+      }
+    });
   }
 
   function showNewCardQuiz(el, char, info) {
@@ -176,66 +203,68 @@ const Study = (() => {
 
     const progress = Math.round(((currentIndex) / totalCards()) * 100);
 
-    el.innerHTML = `
-      <div class="study-progress">
-        <span>${currentIndex + 1} / ${totalCards()}</span>
-        <div class="study-progress-bar"><div class="study-progress-fill" style="width:${progress}%"></div></div>
-        <span class="meta-tag" style="font-size:11px;">QUIZ</span>
-      </div>
-      <div class="study-card" style="cursor:default;">
-        <p style="font-size:14px; color:var(--text-muted);">Which character is</p>
-        <div class="study-pinyin-row">
-          <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:32px; font-weight:700;">${UI.esc(info.p)}</span>
-          ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+    swapContent(el, () => {
+      el.innerHTML = `
+        <div class="study-progress">
+          <span>${currentIndex + 1} / ${totalCards()}</span>
+          <div class="study-progress-bar"><div class="study-progress-fill" style="width:${progress}%"></div></div>
+          <span class="meta-tag" style="font-size:11px;">QUIZ</span>
         </div>
-        <div class="definition">${UI.esc(info.d)}</div>
-      </div>
-      <div class="rating-buttons" style="margin-top:12px;">
-        ${options.map(opt => `
-          <button class="rating-btn" data-char="${opt}"
-            style="background:var(--bg-secondary); color:var(--text-primary); font-size:28px; padding:20px 8px; font-family:'PingFang SC',sans-serif;">
-            ${opt}
-          </button>
-        `).join('')}
-      </div>
-    `;
+        <div class="study-card" style="cursor:default;">
+          <p style="font-size:14px; color:var(--text-muted);">Which character is</p>
+          <div class="study-pinyin-row">
+            <span class="pinyin tone-${UI.getTone(info.p)}" style="font-size:32px; font-weight:700;">${UI.esc(info.p)}</span>
+            ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+          </div>
+          <div class="definition">${UI.esc(info.d)}</div>
+        </div>
+        <div class="rating-buttons" style="margin-top:12px;">
+          ${options.map(opt => `
+            <button class="rating-btn" data-char="${opt}"
+              style="background:var(--bg-secondary); color:var(--text-primary); font-size:28px; padding:20px 8px; font-family:'PingFang SC',sans-serif;">
+              ${opt}
+            </button>
+          `).join('')}
+        </div>
+      `;
 
-    if (typeof Audio_ !== 'undefined') Audio_.attachButtons(el);
+      if (typeof Audio_ !== 'undefined') Audio_.attachButtons(el);
 
-    el.querySelectorAll('.rating-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const chosen = btn.dataset.char;
-        const correct = chosen === char;
+      el.querySelectorAll('.rating-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const chosen = btn.dataset.char;
+          const correct = chosen === char;
 
-        // Highlight correct/wrong
-        el.querySelectorAll('.rating-btn').forEach(b => {
-          if (b.dataset.char === char) {
-            b.style.background = 'var(--rating-good)';
-            b.style.color = '#fff';
-          } else if (b === btn && !correct) {
-            b.style.background = 'var(--rating-again)';
-            b.style.color = '#fff';
+          // Highlight correct/wrong
+          el.querySelectorAll('.rating-btn').forEach(b => {
+            if (b.dataset.char === char) {
+              b.style.background = 'var(--rating-good)';
+              b.style.color = '#fff';
+            } else if (b === btn && !correct) {
+              b.style.background = 'var(--rating-again)';
+              b.style.color = '#fff';
+            }
+            b.disabled = true;
+          });
+
+          if (correct) {
+            // Schedule for mini-review in a few cards
+            miniReviewQueue.push(char);
+            // Rate as Good for initial entry into SRS
+            SRS.rateCard(char, SRS.Rating.Good);
+            Storage.recordNewCard();
+            sessionStats.newLearned++;
+          } else {
+            // Rate as Again
+            SRS.rateCard(char, SRS.Rating.Again);
+            Storage.recordNewCard();
           }
-          b.disabled = true;
+
+          setTimeout(() => {
+            currentIndex++;
+            showCard();
+          }, correct ? 600 : 1200);
         });
-
-        if (correct) {
-          // Schedule for mini-review in a few cards
-          miniReviewQueue.push(char);
-          // Rate as Good for initial entry into SRS
-          SRS.rateCard(char, SRS.Rating.Good);
-          Storage.recordNewCard();
-          sessionStats.newLearned++;
-        } else {
-          // Rate as Again
-          SRS.rateCard(char, SRS.Rating.Again);
-          Storage.recordNewCard();
-        }
-
-        setTimeout(() => {
-          currentIndex++;
-          showCard();
-        }, correct ? 600 : 1200);
       });
     });
   }
@@ -245,26 +274,28 @@ const Study = (() => {
     const progress = Math.round(((currentIndex) / totalCards()) * 100);
     const isMiniReview = miniReviewQueue.includes(char);
 
-    el.innerHTML = `
-      <div class="study-progress">
-        <span>${currentIndex + 1} / ${totalCards()}</span>
-        <div class="study-progress-bar"><div class="study-progress-fill" style="width:${progress}%"></div></div>
-        ${isMiniReview ? '<span class="meta-tag" style="font-size:11px;">REVIEW</span>' : ''}
-      </div>
-      <div class="study-card" id="study-card">
-        <div class="char-large">${UI.esc(char)}</div>
-        <div id="reveal-content"></div>
-        <p class="hint" id="reveal-hint">Tap to reveal</p>
-      </div>
-      <div id="rating-area"></div>
-    `;
+    swapContent(el, () => {
+      el.innerHTML = `
+        <div class="study-progress">
+          <span>${currentIndex + 1} / ${totalCards()}</span>
+          <div class="study-progress-bar"><div class="study-progress-fill" style="width:${progress}%"></div></div>
+          ${isMiniReview ? '<span class="meta-tag" style="font-size:11px;">REVIEW</span>' : ''}
+        </div>
+        <div class="study-card" id="study-card">
+          <div class="char-large">${UI.esc(char)}</div>
+          <div id="reveal-content"></div>
+          <p class="hint" id="reveal-hint">Tap to reveal</p>
+        </div>
+        <div id="rating-area"></div>
+      `;
 
-    revealStage = 0;
-    updateReveal(char, info);
-
-    document.getElementById('study-card').addEventListener('click', () => {
-      revealStage++;
+      revealStage = 0;
       updateReveal(char, info);
+
+      document.getElementById('study-card').addEventListener('click', () => {
+        revealStage++;
+        updateReveal(char, info);
+      });
     });
   }
 
@@ -386,33 +417,35 @@ const Study = (() => {
     Storage.updateStreak();
     Sync.unlock();
 
-    el.innerHTML = `
-      <div class="summary-container fade-in">
-        <h2>Session Complete</h2>
-        <div class="summary-stats">
-          <div class="summary-stat">
-            <div class="value">${sessionStats.reviews}</div>
-            <div class="label">Reviews</div>
+    swapContent(el, () => {
+      el.innerHTML = `
+        <div class="summary-container">
+          <h2>Session Complete</h2>
+          <div class="summary-stats">
+            <div class="summary-stat">
+              <div class="value">${sessionStats.reviews}</div>
+              <div class="label">Reviews</div>
+            </div>
+            <div class="summary-stat">
+              <div class="value">${accuracy}%</div>
+              <div class="label">Accuracy</div>
+            </div>
+            <div class="summary-stat">
+              <div class="value">${sessionStats.newLearned}</div>
+              <div class="label">New Learned</div>
+            </div>
+            <div class="summary-stat">
+              <div class="value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+              <div class="label">Duration</div>
+            </div>
           </div>
-          <div class="summary-stat">
-            <div class="value">${accuracy}%</div>
-            <div class="label">Accuracy</div>
-          </div>
-          <div class="summary-stat">
-            <div class="value">${sessionStats.newLearned}</div>
-            <div class="label">New Learned</div>
-          </div>
-          <div class="summary-stat">
-            <div class="value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
-            <div class="label">Duration</div>
-          </div>
+          <button class="btn-primary" id="study-done-btn" style="margin-top:24px;">Done</button>
         </div>
-        <button class="btn-primary" id="study-done-btn" style="margin-top:24px;">Done</button>
-      </div>
-    `;
-    document.getElementById('study-done-btn').addEventListener('click', () => {
-      rendered = false;
-      App.navigate('home');
+      `;
+      document.getElementById('study-done-btn').addEventListener('click', () => {
+        rendered = false;
+        App.navigate('home');
+      });
     });
   }
 
