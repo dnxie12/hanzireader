@@ -8,14 +8,22 @@ const UI = (() => {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // Format decomposition string for display:
-  // Strip IDC chars (U+2FF0-U+2FFB), replace ？ with ◌, space-separate components
-  function formatDecomp(dc) {
+  // Wrap a character in a clickable span if it exists in CHAR_DATA
+  function charSpan(ch) {
+    if (Data.getChar(ch)) return `<span class="char-link" data-char="${esc(ch)}">${esc(ch)}</span>`;
+    return `<span>${esc(ch)}</span>`;
+  }
+
+  // Render decomposition as HTML with clickable components
+  function renderDecompHTML(dc) {
     if (!dc) return '';
     let result = dc.replace(/[\u2FF0-\u2FFB]/g, '');
     result = result.replace(/\uff1f/g, '\u25CC');
     if (!result.replace(/[\u25CC\s]/g, '')) return '';
-    return [...result].join(' ');
+    return [...result].filter(ch => ch.trim()).map(ch => {
+      if (ch === '\u25CC') return '<span class="decomp-placeholder">\u25CC</span>';
+      return charSpan(ch);
+    }).join(' ');
   }
 
   // Map tone marks to tone numbers
@@ -68,20 +76,55 @@ const UI = (() => {
     if (!compounds || compounds.length === 0) return '';
     return compounds.map(([chars, pinyin, def]) => `
       <div class="modal-compound">
-        <span class="cw-chars">${esc(chars)}</span>
+        <span class="cw-chars">${[...chars].map(ch => charSpan(ch)).join('')}</span>
         ${renderPinyin(pinyin, { className: 'cw-pinyin' })}
         <span class="cw-def">${esc(def)}</span>
       </div>
     `).join('');
   }
 
+  // Modal navigation history for drill-down through decomposition/compounds
+  let modalHistory = [];
+  let modalDelegationAttached = false;
+
+  function ensureModalDelegation() {
+    if (modalDelegationAttached) return;
+    const modal = document.getElementById('detail-modal');
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) { modal.classList.remove('active'); modalHistory = []; return; }
+      if (e.target.closest('.modal-close')) { modal.classList.remove('active'); modalHistory = []; return; }
+      const backBtn = e.target.closest('.modal-back');
+      if (backBtn) { const prev = modalHistory.pop(); if (prev) showCharModal(prev, 'back'); return; }
+      const charLink = e.target.closest('.char-link');
+      if (charLink) {
+        const target = charLink.dataset.char;
+        const current = modal.querySelector('.modal-char')?.textContent;
+        if (target && target !== current) showCharModal(target, 'push');
+        return;
+      }
+    });
+    modalDelegationAttached = true;
+  }
+
   // Show the detail modal for a character
-  function showCharModal(char) {
+  // nav: 'reset' (default/external), 'push' (drill-down), 'back' (history pop)
+  function showCharModal(char, nav = 'reset') {
     const info = Data.getChar(char);
     if (!info) return;
 
     const modal = document.getElementById('detail-modal');
     const content = modal.querySelector('.modal-content');
+
+    if (nav === 'reset') {
+      modalHistory = [];
+      content.classList.remove('no-animate');
+    } else {
+      content.classList.add('no-animate');
+      if (nav === 'push') {
+        const currentChar = modal.querySelector('.modal-char')?.textContent;
+        if (currentChar) modalHistory.push(currentChar);
+      }
+    }
 
     const srsState = Storage.getCardState(char);
     let stateLabel = 'New';
@@ -91,17 +134,20 @@ const UI = (() => {
     }
 
     content.innerHTML = `
+      <div class="modal-toolbar">
+        ${modalHistory.length > 0 ? '<button class="modal-back" aria-label="Back">&larr;</button>' : '<div></div>'}
+        <button class="modal-close" aria-label="Close">&times;</button>
+      </div>
       <div class="modal-header">
         <div class="modal-char-info">
           <div class="modal-char">${esc(char)}</div>
           <div class="modal-basics">
-            <h2>${renderPinyin(info.p)}</h2>
+            <div class="modal-pinyin-row">
+              <h2>${renderPinyin(info.p)}</h2>
+              ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char) : ''}
+            </div>
             <p>${esc(info.d)}</p>
           </div>
-        </div>
-        <div class="modal-header-actions">
-          ${typeof Audio_ !== 'undefined' && Audio_.isEnabled() ? Audio_.buttonHTML(char, { className: 'audio-btn modal-audio-btn' }) : ''}
-          <button class="modal-close" aria-label="Close">&times;</button>
         </div>
       </div>
 
@@ -123,10 +169,10 @@ const UI = (() => {
       </div>
       ` : ''}
 
-      ${(() => { const dc = formatDecomp(info.dc); return dc ? `
+      ${(() => { const dcHtml = renderDecompHTML(info.dc); return dcHtml ? `
       <div class="modal-section">
         <h3>Decomposition</h3>
-        <p class="etymology-text" style="font-size: 24px; font-family: 'PingFang SC', sans-serif;">${esc(dc)}</p>
+        <p class="decomp-components">${dcHtml}</p>
       </div>
       ` : ''; })()}
 
@@ -140,16 +186,11 @@ const UI = (() => {
       ` : ''}
     `;
 
+    ensureModalDelegation();
     modal.classList.add('active');
 
     // Attach audio button handler
     if (typeof Audio_ !== 'undefined') Audio_.attachButtons(content);
-
-    const close = content.querySelector('.modal-close');
-    close.addEventListener('click', () => modal.classList.remove('active'));
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.remove('active');
-    });
   }
 
   // Simple toast notification
