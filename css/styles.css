@@ -941,9 +941,7 @@ body {
 }
 
 .cw-chars .char-link {
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 
 .decomp-components .char-link {
