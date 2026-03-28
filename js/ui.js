@@ -8,6 +8,16 @@ const UI = (() => {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // Format decomposition string for display:
+  // Strip IDC chars (U+2FF0-U+2FFB), replace ？ with ◌, space-separate components
+  function formatDecomp(dc) {
+    if (!dc) return '';
+    let result = dc.replace(/[\u2FF0-\u2FFB]/g, '');
+    result = result.replace(/\uff1f/g, '\u25CC');
+    if (!result.replace(/[\u25CC\s]/g, '')) return '';
+    return [...result].join(' ');
+  }
+
   // Map tone marks to tone numbers
   const TONE_MAP = {
     'ā': 1, 'á': 1, 'ǎ': 1, 'à': 1,  // Using position-based detection instead
@@ -113,12 +123,12 @@ const UI = (() => {
       </div>
       ` : ''}
 
-      ${info.dc ? `
+      ${(() => { const dc = formatDecomp(info.dc); return dc ? `
       <div class="modal-section">
         <h3>Decomposition</h3>
-        <p class="etymology-text" style="font-size: 24px; font-family: 'PingFang SC', sans-serif;">${esc(info.dc)}</p>
+        <p class="etymology-text" style="font-size: 24px; font-family: 'PingFang SC', sans-serif;">${esc(dc)}</p>
       </div>
-      ` : ''}
+      ` : ''; })()}
 
       ${info.cw && info.cw.length > 0 ? `
       <div class="modal-section">
