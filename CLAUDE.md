@@ -11,6 +11,7 @@ Chinese character reading flashcard PWA for heritage Mandarin speakers. Teaches 
 - Storage: localStorage with in-memory cache (keys: `hanzi_srs`, `hanzi_progress`)
 - PWA: service worker (cache-first), manifest.json
 - Offline-first: all data pre-bundled, no runtime API calls
+- **First-visit flow**: first-time visitors (no localStorage) see the placement test overlay (`js/placement.js`) before any other screen. Crawlers and verification bots will see this, not the home screen.
 
 ## File Structure
 
