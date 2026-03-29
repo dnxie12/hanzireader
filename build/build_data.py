@@ -298,6 +298,19 @@ def parse_cedict(char_set, word_freq):
     return result
 
 
+# --- Step 4b: Load enriched etymology cache ---
+def load_etymology_cache():
+    """Load AI-generated etymology descriptions from cache."""
+    cache_path = SOURCES / "etymology_cache.json"
+    if not cache_path.exists():
+        print("  Etymology cache: not found (using Make Me a Hanzi hints)")
+        return {}
+    with open(cache_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    print(f"  Etymology cache: {len(data)} entries")
+    return data
+
+
 # --- Step 5: Generate learning order ---
 def generate_learn_order(chars):
     """
@@ -418,17 +431,21 @@ def main():
     print("Step 4: Parsing CC-CEDICT...")
     compounds = parse_cedict(chars, word_freq)
 
+    print("Step 4b: Loading etymology cache...")
+    etymology_cache = load_etymology_cache()
+
     # Merge Make Me a Hanzi data
     print("Step 5: Merging data...")
     for char in chars:
         if char in mmah:
             chars[char]["dc"] = mmah[char]["dc"]
             chars[char]["et"] = mmah[char]["et"]
-            chars[char]["eh"] = mmah[char]["eh"]
+            # Prefer enriched etymology from cache, fall back to Make Me a Hanzi
+            chars[char]["eh"] = etymology_cache.get(char, mmah[char]["eh"])
         else:
             chars[char]["dc"] = ""
             chars[char]["et"] = ""
-            chars[char]["eh"] = ""
+            chars[char]["eh"] = etymology_cache.get(char, "")
 
         if char in compounds:
             chars[char]["cw"] = compounds[char]
