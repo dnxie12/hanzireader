@@ -1528,6 +1528,13 @@ body {
   color: var(--text-primary);
 }
 
+.placement-intro-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: -8px;
+}
+
 .placement-intro-body {
   font-size: 16px;
   color: var(--text-secondary);

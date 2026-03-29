@@ -89,7 +89,8 @@ const Placement = (() => {
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
           </svg>
         </div>
-        <h1 class="placement-intro-title">Find Your Level</h1>
+        <h1 class="placement-intro-title">Hanzi Reader</h1>
+        <h2 class="placement-intro-subtitle">Find Your Level</h2>
         <p class="placement-intro-body">
           We'll show you short Chinese passages. Tap any characters you <strong>don't</strong> recognize.
         </p>
