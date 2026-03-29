@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v85';
+const CACHE_NAME = 'hanzi-reader-v86';
 const AUDIO_CACHE = 'hanzi-audio-v1';
 const ASSETS = [
   './',

@@ -1,7 +1,7 @@
 {
   "name": "Hanzi Reader",
   "short_name": "Hanzi",
-  "description": "Chinese character reading flashcards for heritage speakers",
+  "description": "Chinese character reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition and contextual reading practice.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1E293B",
