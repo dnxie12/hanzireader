@@ -27,11 +27,13 @@ const Placement = (() => {
 
     const el = document.getElementById('screen-placement');
     el.classList.add('active');
+    Analytics.track('placement-start');
     renderIntro();
   }
 
   function skip() {
     Storage.updateSettings({ placementDone: true });
+    Analytics.track('placement-skip');
     hide();
     App.finishInit();
   }
@@ -279,6 +281,7 @@ const Placement = (() => {
     const level = levelLabels[lastPassedDiff] || 'Beginner';
 
     Storage.updateSettings({ placementDone: true });
+    Analytics.track('placement-complete', { level, charsAdded: autoLearnCount });
 
     renderSummary(autoLearnCount, level);
   }

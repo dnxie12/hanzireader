@@ -169,6 +169,10 @@ const Stats = (() => {
       const val = parseInt(e.target.value);
       document.getElementById('new-per-day-val').textContent = val;
       Storage.updateSettings({ newPerDay: val });
+      clearTimeout(Analytics._newPerDayTimer);
+      Analytics._newPerDayTimer = setTimeout(() => {
+        Analytics.track('setting-changed', { setting: 'newPerDay', value: val });
+      }, 500);
     });
 
     document.getElementById('audio-toggle-wrap').addEventListener('click', () => {
@@ -181,6 +185,7 @@ const Stats = (() => {
     document.getElementById('setting-theme').addEventListener('change', (e) => {
       Storage.updateSettings({ theme: e.target.value });
       App.applyTheme(e.target.value);
+      Analytics.track('setting-changed', { setting: 'theme', value: e.target.value });
     });
 
     // Sync event listeners
@@ -240,6 +245,7 @@ const Stats = (() => {
       a.click();
       URL.revokeObjectURL(url);
       UI.toast('Progress exported');
+      Analytics.track('data-export');
     });
 
     document.getElementById('btn-import').addEventListener('click', () => {
@@ -254,6 +260,7 @@ const Stats = (() => {
         try {
           Storage.importData(reader.result);
           UI.toast('Progress imported');
+          Analytics.track('data-import');
           Stats.render(); // Refresh
         } catch {
           UI.toast('Invalid backup file');

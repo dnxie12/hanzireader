@@ -81,6 +81,7 @@ const Study = (() => {
     }
 
     sessionStats = { reviews: 0, correct: 0, newLearned: 0, startTime: Date.now() };
+    Analytics.track('study-start', { due: queue.length, new: newQueue.length });
     currentIndex = 0;
     rendered = true;
     currentView = 'card';
@@ -413,6 +414,13 @@ const Study = (() => {
     const seconds = duration % 60;
     const accuracy = sessionStats.reviews > 0
       ? Math.round(sessionStats.correct / sessionStats.reviews * 100) : 0;
+
+    Analytics.track('study-complete', {
+      reviews: sessionStats.reviews,
+      correct: sessionStats.correct,
+      newLearned: sessionStats.newLearned,
+      durationSec: duration
+    });
 
     Storage.updateStreak();
     Sync.unlock();
