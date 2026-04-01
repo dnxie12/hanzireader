@@ -423,6 +423,7 @@ const Read = (() => {
       sessionSnippets = selectSessionSnippets(cachedProfile, 5, currentDiffFilter);
       sessionIndex = 0;
       sessionStats = { snippetsRead: 0, charsEncountered: 0, lookups: 0, startTime: Date.now() };
+      Analytics.track('read-start', { snippets: sessionSnippets.length });
       if (sessionSnippets.length > 0) openSnippet(sessionSnippets[0]);
     });
 
@@ -645,6 +646,12 @@ const Read = (() => {
 
     const el = document.getElementById('screen-read');
     const duration = Math.round((Date.now() - sessionStats.startTime) / 1000);
+    Analytics.track('read-complete', {
+      snippetsRead: sessionStats.snippetsRead,
+      lookups: sessionStats.lookups,
+      flagged: flaggedChars.size,
+      durationSec: duration
+    });
     const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
 
