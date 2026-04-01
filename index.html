@@ -3,33 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#1E293B">
+  <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E293B" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com/firebasejs/ https://apis.google.com/; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.googleusercontent.com; media-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com; frame-src https://accounts.google.com https://*.firebaseapp.com;">
-  <title>Hanzi Reader</title>
+  <title>Hanzi Reader | Chinese Reading Flashcards for Heritage Mandarin Speakers</title>
   <meta name="application-name" content="Hanzi Reader">
   <meta property="og:site_name" content="Hanzi Reader">
-  <meta property="og:title" content="Hanzi Reader">
-  <meta name="description" content="Chinese character reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition and contextual reading practice.">
-  <meta property="og:description" content="Chinese character reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition and contextual reading practice.">
+  <meta property="og:title" content="Hanzi Reader | Chinese Reading Flashcards for Heritage Mandarin Speakers">
+  <meta name="description" content="Chinese reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition, short reading passages, and offline practice in a fast installable web app.">
+  <meta property="og:description" content="Chinese reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition, short reading passages, and offline practice in a fast installable web app.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://dnxie12.github.io/hanzireader/">
-  <meta property="og:image" content="https://dnxie12.github.io/hanzireader/icons/icon-512.png">
+  <meta property="og:url" content="https://hanzireader.xyz/">
+  <meta property="og:image" content="https://hanzireader.xyz/icons/icon-512.png">
+  <meta property="og:image:alt" content="Hanzi Reader app icon">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Hanzi Reader">
-  <meta name="twitter:description" content="Chinese character reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition and contextual reading practice.">
-  <meta name="twitter:image" content="https://dnxie12.github.io/hanzireader/icons/icon-512.png">
-  <link rel="canonical" href="https://dnxie12.github.io/hanzireader/">
+  <meta name="twitter:title" content="Hanzi Reader | Chinese Reading Flashcards for Heritage Mandarin Speakers">
+  <meta name="twitter:description" content="Chinese reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition, short reading passages, and offline practice in a fast installable web app.">
+  <meta name="twitter:image" content="https://hanzireader.xyz/icons/icon-512.png">
+  <link rel="canonical" href="https://hanzireader.xyz/">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Hanzi Reader",
-    "url": "https://dnxie12.github.io/hanzireader/",
-    "description": "Chinese character reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition and contextual reading practice.",
+    "url": "https://hanzireader.xyz/",
+    "description": "Chinese reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition, short reading passages, and offline practice in a fast installable web app.",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Any",
+    "inLanguage": ["en", "zh"],
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
   </script>
@@ -47,12 +50,81 @@
   <div id="app">
     <!-- Screens -->
     <div id="screen-home" class="screen active">
-      <h1>Hanzi Reader</h1>
-      <p>Chinese character reading flashcards for heritage Mandarin speakers. Learn to recognize 2,400 characters with spaced repetition and contextual reading practice.</p>
+      <section class="home-hero">
+        <div class="home-header">
+          <p class="eyebrow">Chinese Reading App for Heritage Mandarin Speakers</p>
+          <h1>Hanzi Reader</h1>
+          <p class="home-lead">Build real Chinese reading literacy with spaced repetition flashcards, short passage practice, and a character set tuned for high-frequency everyday Mandarin.</p>
+        </div>
+
+        <div class="home-trust-list" aria-label="Key product highlights">
+          <span>2,400 characters</span>
+          <span>120+ short passages</span>
+          <span>Offline-first PWA</span>
+        </div>
+
+        <div class="home-cta-row">
+          <a class="btn-primary" id="home-study-btn" href="#study">Start Learning</a>
+          <a class="btn-secondary home-read-link" id="home-read-btn" href="#read">Reading Practice</a>
+        </div>
+      </section>
+
+      <section id="home-dashboard" aria-live="polite"></section>
+
+      <section class="home-section">
+        <h2>Made for heritage speakers who can understand Mandarin but cannot read comfortably yet</h2>
+        <p>Hanzi Reader focuses on character recognition and reading fluency instead of handwriting drills or full grammar instruction. It is built for learners who already know spoken Mandarin and want a faster path into reading texts, signs, messages, and short everyday passages.</p>
+      </section>
+
+      <section class="home-section">
+        <h2>How Hanzi Reader works</h2>
+        <div class="home-feature-grid">
+          <article class="home-feature-card">
+            <h3>Placement first</h3>
+            <p>A quick placement flow skips characters you already know so you start at the right level instead of relearning obvious basics.</p>
+          </article>
+          <article class="home-feature-card">
+            <h3>Spaced repetition flashcards</h3>
+            <p>Study new characters and review old ones with FSRS scheduling, pinyin, concise definitions, and compound-word context.</p>
+          </article>
+          <article class="home-feature-card">
+            <h3>Short contextual reading practice</h3>
+            <p>Unlock three-sentence passages that stay mostly within your known characters while stretching you with a small amount of new material.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <h2>What you get</h2>
+        <ul class="home-benefits">
+          <li>Chinese reading flashcards covering 2,400 high-frequency characters across HSK 1-6 and beyond</li>
+          <li>Tap-to-lookup reading passages with pinyin, definitions, and prioritization of unfamiliar characters</li>
+          <li>Installable mobile web app that works offline after first load</li>
+          <li>Optional cloud sync, plus local-first storage when you do not want an account</li>
+        </ul>
+      </section>
+
+      <section class="home-section">
+        <h2>Why learners use Hanzi Reader</h2>
+        <div class="home-faq">
+          <article>
+            <h3>It targets literacy, not everything at once</h3>
+            <p>If you already speak Mandarin, the bottleneck is often character recognition. Hanzi Reader keeps the product focused on that problem.</p>
+          </article>
+          <article>
+            <h3>It balances memorization with real reading</h3>
+            <p>Flashcards build recall, while reading practice reinforces characters in meaningful context before they fade.</p>
+          </article>
+          <article>
+            <h3>It is fast to use on a phone</h3>
+            <p>The app runs entirely in the browser, installs like a PWA, and is designed for short daily study sessions without extra setup.</p>
+          </article>
+        </div>
+      </section>
     </div>
-    <div id="screen-read" class="screen"></div>
-    <div id="screen-study" class="screen"></div>
-    <div id="screen-browse" class="screen"></div>
+    <div id="screen-read" class="screen" lang="zh"></div>
+    <div id="screen-study" class="screen" lang="zh"></div>
+    <div id="screen-browse" class="screen" lang="zh"></div>
     <div id="screen-stats" class="screen"></div>
 
     <!-- Placement Test Overlay -->

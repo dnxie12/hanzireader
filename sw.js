@@ -1,8 +1,9 @@
-const CACHE_NAME = 'hanzi-reader-v88';
+const CACHE_NAME = 'hanzi-reader-v90';
 const AUDIO_CACHE = 'hanzi-audio-v1';
 const ASSETS = [
   './',
   './index.html',
+  './privacy.html',
   './css/styles.css',
   './js/app.js',
   './js/storage.js',
