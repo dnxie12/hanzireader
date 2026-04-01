@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanzi-reader-v91';
+const CACHE_NAME = 'hanzi-reader-v92';
 const AUDIO_CACHE = 'hanzi-audio-v1';
 const ASSETS = [
   './',
@@ -54,6 +54,7 @@ self.addEventListener('fetch', e => {
     url.hostname.includes('gstatic.com') ||
     url.hostname === 'accounts.google.com' ||
     url.hostname === 'cloud.umami.is' ||
+    url.hostname === 'api-gateway.umami.dev' ||
     url.hostname.endsWith('.firebaseapp.com')) {
     return;
   }
