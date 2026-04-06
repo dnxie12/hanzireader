@@ -429,7 +429,7 @@ body {
 }
 
 #screen-study {
-  transition: opacity 60ms ease-out;
+  transition: opacity 80ms ease-out;
 }
 
 #screen-study.card-exit {

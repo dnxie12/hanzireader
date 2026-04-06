@@ -14,19 +14,46 @@ const Study = (() => {
   let currentView = 'card'; // 'card' | 'empty' | 'summary'
 
   let swapPending = false;
+  let pendingCallback = null;
+  let pendingFallback = null;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function cancelPendingSwap(el) {
+    if (pendingCallback) {
+      el.removeEventListener('transitionend', pendingCallback);
+      pendingCallback = null;
+    }
+    if (pendingFallback) {
+      clearTimeout(pendingFallback);
+      pendingFallback = null;
+    }
+    swapPending = false;
+  }
+
   function swapContent(el, buildFn) {
     if (!el.querySelector('.study-card') && !el.querySelector('.summary-container')) {
       buildFn();
       return;
     }
     if (swapPending) {
+      cancelPendingSwap(el);
       buildFn();
       el.classList.remove('card-exit');
       return;
     }
+    if (reducedMotion.matches) {
+      buildFn();
+      return;
+    }
     swapPending = true;
     el.classList.add('card-exit');
-    setTimeout(() => { // 60 — must match CSS transition duration on #screen-study
+
+    function onFadedOut(e) {
+      if (e && e.propertyName !== 'opacity') return;
+      el.removeEventListener('transitionend', onFadedOut);
+      pendingCallback = null;
+      clearTimeout(pendingFallback);
+      pendingFallback = null;
       try {
         buildFn();
       } finally {
@@ -35,7 +62,18 @@ const Study = (() => {
           el.classList.remove('card-exit');
         });
       }
-    }, 60);
+    }
+
+    pendingCallback = onFadedOut;
+    el.addEventListener('transitionend', onFadedOut);
+
+    // Safety fallback: if transitionend doesn't fire (e.g. element
+    // became hidden), proceed after 100ms
+    pendingFallback = setTimeout(() => {
+      if (swapPending) {
+        onFadedOut();
+      }
+    }, 100);
   }
 
   function render() {
