@@ -12,6 +12,7 @@ const Home = (() => {
 
     el.innerHTML = `
       <div class="home-header">
+        <img src="icons/icon-192.png" alt="Hanzi Reader" class="home-icon">
         <h1>Hanzi Reader</h1>
         <p>Character recognition for heritage speakers</p>
       </div>
