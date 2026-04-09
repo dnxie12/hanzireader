@@ -430,6 +430,8 @@ body {
 
 #screen-study {
   transition: opacity 80ms ease-out;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #screen-study.card-exit {
@@ -456,7 +458,6 @@ body {
   box-shadow: var(--shadow);
   cursor: pointer;
   transition: box-shadow 0.15s;
-  user-select: none;
 }
 
 .study-card:active {
