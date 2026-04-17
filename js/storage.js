@@ -11,6 +11,8 @@ const Storage = (() => {
   const DEFAULT_PROGRESS = {
     streak: { current: 0, longest: 0, lastDate: null },
     daily: {},
+    badges: {},
+    badgesBackfilled: false,
     settings: {
       newPerDay: 25,
       theme: 'system',
@@ -182,6 +184,7 @@ const Storage = (() => {
     if (prog.streak && typeof prog.streak !== 'object') return false;
     if (prog.daily && typeof prog.daily !== 'object') return false;
     if (prog.settings && typeof prog.settings !== 'object') return false;
+    if (prog.badges && (typeof prog.badges !== 'object' || Array.isArray(prog.badges))) return false;
     return true;
   }
 
