@@ -464,7 +464,8 @@ const Study = (() => {
     Sync.unlock();
 
     let earnedHtml = '';
-    if (typeof Badges !== 'undefined') {
+    const didSomething = sessionStats.reviews > 0 || sessionStats.newLearned > 0;
+    if (didSomething && typeof Badges !== 'undefined') {
       const { newlyUnlocked } = Badges.evaluate({
         streak: Storage.getProgress().streak,
         literacyPct: Data.getLiteracyPercent(),

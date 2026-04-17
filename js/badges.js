@@ -4,6 +4,8 @@ const Badges = (() => {
 
   // SVGs: viewBox 0 0 24 24, currentColor stroke, 1.5 weight, rounded caps.
   // Earned/locked colorization handled in CSS on parent .badge-item.
+  // WARNING: `svg` field is raw HTML injected verbatim (no escaping).
+  // Only populate with hand-authored markup. NEVER wire user input here.
   const SVG = {
     sprout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"/><path d="M12 11c0-3 2-5 5-5 0 3-2 5-5 5z"/><path d="M12 13c0-3-2-5-5-5 0 3 2 5 5 5z"/><path d="M8 21h8"/></svg>`,
     flame: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .5 1 1 1.5 2 1.5-1-2-1-5 1-7.5z"/></svg>`,
@@ -18,7 +20,7 @@ const Badges = (() => {
 
   // HSK shield: Roman numerals I–VI, fill intensity grows with level.
   function hskShield(numeral, level) {
-    const fillOpacity = (level / 6) * 0.2;
+    const fillOpacity = 0.1 + (level / 6) * 0.25;
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z" fill="currentColor" fill-opacity="${fillOpacity}"/><text x="12" y="15" text-anchor="middle" font-size="7" font-weight="700" font-family="ui-sans-serif,system-ui,sans-serif" fill="currentColor" stroke="none">${numeral}</text></svg>`;
   }
 
@@ -73,9 +75,32 @@ const Badges = (() => {
 
   function getUnlockedMap() {
     const p = Storage.getProgress();
-    if (!p.badges || typeof p.badges !== 'object') p.badges = {};
-    return p.badges;
+    return (p.badges && typeof p.badges === 'object') ? p.badges : {};
   }
+
+  // One-time silent backfill: on first load after upgrade, mark already-earned
+  // badges as unlocked without surfacing them on the next session summary.
+  // Prevents a flood of "NEW ACHIEVEMENT" cards for users with existing progress.
+  function backfillOnce() {
+    const p = Storage.getProgress();
+    if (p.badgesBackfilled) return;
+    if (!p.badges || typeof p.badges !== 'object') p.badges = {};
+    const ctx = {
+      streak: p.streak,
+      literacyPct: Data.getLiteracyPercent(),
+      hskCounts: Data.getHSKCounts(),
+    };
+    const nowIso = new Date().toISOString();
+    for (const def of BADGE_DEFS) {
+      if (p.badges[def.id]) continue;
+      let passed = false;
+      try { passed = !!def.check(ctx); } catch { passed = false; }
+      if (passed) p.badges[def.id] = { unlockedAt: nowIso, backfilled: true };
+    }
+    p.badgesBackfilled = true;
+    Storage.saveProgress(p);
+  }
+  backfillOnce();
 
   function evaluate(ctx) {
     const p = Storage.getProgress();
@@ -116,12 +141,13 @@ const Badges = (() => {
       const items = defs.map(d => {
         const earned = unlocked[d.id];
         const cls = earned ? 'badge-item earned' : 'badge-item locked';
-        const sub = earned
-          ? formatDate(earned.unlockedAt)
-          : UI.esc(d.description);
+        const sub = earned ? formatDate(earned.unlockedAt) : d.description;
+        const ariaLabel = earned
+          ? `${d.name}, earned ${sub}`
+          : `${d.name}, locked — ${d.description}`;
         return `
           <div class="${cls}" data-group="${UI.esc(d.group)}" title="${UI.esc(d.name)} — ${UI.esc(d.description)}">
-            <div class="badge-icon">${d.svg}</div>
+            <div class="badge-icon" role="img" aria-label="${UI.esc(ariaLabel)}">${d.svg}</div>
             <div class="badge-name">${UI.esc(d.name)}</div>
             <div class="badge-sub">${UI.esc(sub)}</div>
           </div>
@@ -144,7 +170,7 @@ const Badges = (() => {
     if (!defs || defs.length === 0) return '';
     const rows = defs.map(d => `
       <div class="badge-earned-row" data-group="${UI.esc(d.group)}">
-        <div class="badge-earned-icon">${d.svg}</div>
+        <div class="badge-earned-icon" role="img" aria-label="${UI.esc(d.name)}">${d.svg}</div>
         <div class="badge-earned-text">
           <div class="badge-earned-name">${UI.esc(d.name)}</div>
           <div class="badge-earned-desc">${UI.esc(d.description)}</div>
@@ -152,7 +178,8 @@ const Badges = (() => {
       </div>
     `).join('');
     const heading = defs.length > 1 ? 'NEW ACHIEVEMENTS' : 'NEW ACHIEVEMENT';
-    const groupAttr = defs.length === 1 ? ` data-group="${UI.esc(defs[0].group)}"` : '';
+    const sharedGroup = defs.every(d => d.group === defs[0].group) ? defs[0].group : null;
+    const groupAttr = sharedGroup ? ` data-group="${UI.esc(sharedGroup)}"` : '';
     return `
       <div class="badge-earned-card fade-in"${groupAttr}>
         <div class="badge-earned-heading">${heading}</div>

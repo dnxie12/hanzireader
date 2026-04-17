@@ -12,6 +12,7 @@ const Storage = (() => {
     streak: { current: 0, longest: 0, lastDate: null },
     daily: {},
     badges: {},
+    badgesBackfilled: false,
     settings: {
       newPerDay: 25,
       theme: 'system',
