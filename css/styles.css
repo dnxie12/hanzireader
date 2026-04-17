@@ -1603,3 +1603,179 @@ body {
     box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
   }
 }
+
+/* --- Badges / Achievements --- */
+.badges-group {
+  margin-bottom: 16px;
+}
+
+.badges-group:last-child {
+  margin-bottom: 0;
+}
+
+.badges-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.badges-group-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.badges-group-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 500px) {
+  .badges-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 12px 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.badge-item.earned {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--bg-card));
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-card));
+}
+
+.badge-item.earned[data-group="consistency"] {
+  color: var(--state-learning);
+  border-color: color-mix(in srgb, var(--state-learning) 28%, var(--bg-card));
+  background: color-mix(in srgb, var(--state-learning) 14%, var(--bg-card));
+}
+
+.badge-item.earned[data-group="mastery"] {
+  color: var(--state-review);
+  border-color: color-mix(in srgb, var(--state-review) 28%, var(--bg-card));
+  background: color-mix(in srgb, var(--state-review) 14%, var(--bg-card));
+}
+
+.badge-item.earned[data-group="hsk"] {
+  color: var(--state-new);
+  border-color: color-mix(in srgb, var(--state-new) 28%, var(--bg-card));
+  background: color-mix(in srgb, var(--state-new) 14%, var(--bg-card));
+}
+
+.badge-item.locked {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.badge-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.badge-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.badge-item.locked .badge-name {
+  color: var(--text-secondary);
+}
+
+.badge-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+/* Inline "new achievement" card shown on session summary */
+.badge-earned-card {
+  --earned-color: var(--accent);
+  width: 100%;
+  background: color-mix(in srgb, var(--earned-color) 14%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--earned-color) 28%, var(--bg-card));
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.badge-earned-card[data-group="consistency"] { --earned-color: var(--state-learning); }
+.badge-earned-card[data-group="mastery"]     { --earned-color: var(--state-review); }
+.badge-earned-card[data-group="hsk"]         { --earned-color: var(--state-new); }
+
+.badge-earned-heading {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--earned-color);
+  text-transform: uppercase;
+}
+
+.badge-earned-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-earned-row[data-group="consistency"] { --earned-color: var(--state-learning); }
+.badge-earned-row[data-group="mastery"]     { --earned-color: var(--state-review); }
+.badge-earned-row[data-group="hsk"]         { --earned-color: var(--state-new); }
+
+.badge-earned-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--earned-color, var(--accent));
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-earned-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.badge-earned-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.badge-earned-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}

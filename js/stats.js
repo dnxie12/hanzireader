@@ -99,6 +99,11 @@ const Stats = (() => {
       </div>
 
       <div class="stats-section">
+        <h2>Achievements</h2>
+        ${typeof Badges !== 'undefined' ? Badges.renderGallery() : ''}
+      </div>
+
+      <div class="stats-section">
         <h2>Settings</h2>
         <div class="settings-group">
           <div class="settings-row">

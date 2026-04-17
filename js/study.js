@@ -463,6 +463,18 @@ const Study = (() => {
     Storage.updateStreak();
     Sync.unlock();
 
+    let earnedHtml = '';
+    if (typeof Badges !== 'undefined') {
+      const { newlyUnlocked } = Badges.evaluate({
+        streak: Storage.getProgress().streak,
+        literacyPct: Data.getLiteracyPercent(),
+        hskCounts: Data.getHSKCounts(),
+      });
+      if (newlyUnlocked.length > 0) {
+        earnedHtml = Badges.renderEarnedCard(newlyUnlocked);
+      }
+    }
+
     swapContent(el, () => {
       el.innerHTML = `
         <div class="summary-container">
@@ -485,6 +497,7 @@ const Study = (() => {
               <div class="label">Duration</div>
             </div>
           </div>
+          ${earnedHtml}
           <button class="btn-primary" id="study-done-btn" style="margin-top:24px;">Done</button>
         </div>
       `;
