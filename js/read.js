@@ -169,7 +169,8 @@ const Read = (() => {
   function classifyChar(char) {
     const state = Storage.getCardState(char);
     if (!state) return 'unseen';
-    if (state.state === 2 || state.state === 3) return 'known';
+    if (state.state === 2) return 'known';
+    if (state.state === 3) return 'relearning';
     return 'learning';
   }
 
