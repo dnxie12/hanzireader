@@ -68,12 +68,13 @@ const Study = (() => {
     el.addEventListener('transitionend', onFadedOut);
 
     // Safety fallback: if transitionend doesn't fire (e.g. element
-    // became hidden), proceed after 100ms
+    // became hidden), proceed after 300ms (comfortably beyond the
+    // 180ms CSS opacity transition)
     pendingFallback = setTimeout(() => {
       if (swapPending) {
         onFadedOut();
       }
-    }, 100);
+    }, 300);
   }
 
   function render() {
