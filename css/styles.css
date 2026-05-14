@@ -474,9 +474,11 @@ body {
 }
 
 #screen-study {
-  transition: opacity 180ms var(--ease-in-out-quint);
+  transition: opacity 120ms var(--ease-out-quint);
   -webkit-user-select: none;
   user-select: none;
+  will-change: opacity;
+  transform: translateZ(0);
 }
 
 #screen-study.card-exit {
